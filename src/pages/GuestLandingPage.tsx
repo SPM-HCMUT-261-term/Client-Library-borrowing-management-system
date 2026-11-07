@@ -57,7 +57,7 @@ export const GuestLandingPage: React.FC = () => {
         <div className="p-8 md:px-12 md:py-10 flex flex-col justify-between gap-6">
           <div className="space-y-4 max-w-[640px]">
             <p className="text-[11px] font-semibold tracking-[0.06em] uppercase text-brand-teal">
-              WELCOME TO WESTBRIDGE SCHOOL LIBRARY
+              WELCOME TO THE SCHOOL LIBRARY
             </p>
             <h1 className="font-serif text-[34px] md:text-[42px] leading-[1.18] text-brand-ink font-normal">
               Your next chapter starts here.

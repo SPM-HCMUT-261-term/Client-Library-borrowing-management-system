@@ -73,7 +73,7 @@ export const Layout: React.FC<LayoutProps> = ({
                   Chapter
                 </span>
                 <span className="font-sans font-medium text-[10px] leading-[12px] text-brand-slate tracking-[0.04em] uppercase">
-                  WESTBRIDGE SCHOOL LIBRARY
+                  SCHOOL LIBRARY
                 </span>
               </div>
             </Link>
@@ -120,19 +120,6 @@ export const Layout: React.FC<LayoutProps> = ({
                   )}
                 </NavLink>
 
-                <NavLink
-                  to="/my-borrowing"
-                  className={`relative h-full flex items-center text-[14px] transition-colors ${
-                    isBorrowingActive
-                      ? 'font-semibold text-brand-teal'
-                      : 'font-normal text-brand-slate hover:text-brand-ink'
-                  }`}
-                >
-                  My borrowing
-                  {isBorrowingActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-teal" />
-                  )}
-                </NavLink>
               </nav>
             ) : (
               <nav className="hidden sm:flex items-center gap-8 h-full">
