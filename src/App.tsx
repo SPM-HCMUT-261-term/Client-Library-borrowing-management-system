@@ -13,6 +13,8 @@ import { GuestLandingPage } from './pages/GuestLandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { StudentHomePage } from './pages/StudentHomePage';
 import { BookCatalogPage } from './pages/BookCatalogPage';
+import { BookDetailPage } from './pages/BookDetailPage';
+import { HoldConfirmedPage } from './pages/HoldConfirmedPage';
 
 const PlaceholderSignedInView: React.FC<{ title: string; subtitle: string }> = ({
   title,
@@ -65,24 +67,8 @@ const AppRoutes: React.FC = () => {
         />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/books" element={<BookCatalogPage />} />
-        <Route
-          path="/books/:id"
-          element={
-            <PlaceholderSignedInView
-              title="Book Detail (/books/:id)"
-              subtitle="Ready for Milestone 5 implementation."
-            />
-          }
-        />
-        <Route
-          path="/holds/:id/confirmed"
-          element={
-            <PlaceholderSignedInView
-              title="Hold Request Confirmed (/holds/:id/confirmed)"
-              subtitle="Ready for Milestone 5 implementation."
-            />
-          }
-        />
+        <Route path="/books/:id" element={<BookDetailPage />} />
+        <Route path="/holds/:id/confirmed" element={<HoldConfirmedPage />} />
         <Route
           path="/my-borrowing"
           element={

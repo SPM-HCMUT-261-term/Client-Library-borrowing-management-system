@@ -111,3 +111,32 @@ feat(student-catalog): implement Student Home page and Book Catalog search, filt
 - Build BookCatalogPage matching Figma frame 6:2206 connected to GET /api/v1/books
 - Support URL-synced search, Availability/Category/Genre/Language filters, sorting, and pagination
 ```
+
+---
+
+## Milestone 5: Book Detail, Request Hold & Hold Confirmation ("Student view" Part 2)
+
+### Changes Made
+- **Book Detail Page (`6:2440`)**:
+  - Created [`BookDetailPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/BookDetailPage.tsx) powered by `GET /api/v1/books/:id` and `POST /api/v1/holds`:
+    - Breadcrumb navigation (`← Back to results / Category / Title`).
+    - Large vector book cover display with format, language, and page count caption (`Paperback · English · 304 pages`).
+    - Full book metadata (`About this book` synopsis, keyword tags, ISBN, Publisher, Published year, Shelf reference).
+    - Right sidebar with live stock summary (`2 of 4 copies available`), shelf location, `"Request to hold"` action button, `viewerContext` eligibility status (`You can borrow · 2 of 5 loans used`), active-hold / blocked-hold states, and `"Before you borrow"` rules card.
+    - `"Copies in our library"` table listing physical copies (`WB-00421`..`WB-00424`) with student-safe `displayLocation` (`FIC HAI · A3` vs `Currently with a reader`).
+- **Hold Request Confirmed Page (`6:2583`)**:
+  - Created [`HoldConfirmedPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/HoldConfirmedPage.tsx) powered by `POST /api/v1/holds` and `DELETE /api/v1/holds/:id`:
+    - Displays the confirmation header (`HOLD REQUEST SUCCESSFUL`, `"Your next chapter is waiting."`).
+    - Receipt card showing `Hold HLD-1042`, assigned copy barcode (`WB-00421`), updated stock breakdown (`4 copies: 1 held for you, 1 available, 2 on loan`), warm amber `COLLECT BY` deadline card (`Fri, 16 October · 3:30 pm`), and student loan usage note.
+    - `"Here's what happens next"` 3-step guide, `"View my holds →"` and `"Keep browsing"` CTAs, and `"Cancel this hold"` action.
+- **Route Integration**:
+  - Updated [src/App.tsx](file:///Users/qcl/personal/projects/BookBorrow/src/App.tsx) to connect `/books/:id` and `/holds/:id/confirmed`.
+
+### Suggested Commit Message
+```text
+feat(book-detail-hold): implement Book Detail page, Request to Hold action, and Hold Confirmed receipt
+
+- Build BookDetailPage matching Figma frame 6:2440 with physical copies table and viewerContext hold eligibility
+- Build HoldConfirmedPage matching Figma frame 6:2583 with HLD-xxxx receipt, pickup deadline, and hold cancellation
+- Connect GET /api/v1/books/:id, POST /api/v1/holds, and DELETE /api/v1/holds/:id
+```
