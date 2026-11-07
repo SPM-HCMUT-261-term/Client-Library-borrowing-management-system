@@ -140,3 +140,27 @@ feat(book-detail-hold): implement Book Detail page, Request to Hold action, and 
 - Build HoldConfirmedPage matching Figma frame 6:2583 with HLD-xxxx receipt, pickup deadline, and hold cancellation
 - Connect GET /api/v1/books/:id, POST /api/v1/holds, and DELETE /api/v1/holds/:id
 ```
+
+---
+
+## Milestone 6: My Borrowing Dashboard, Online Renewal & Hold Cancellation ("Student view" Part 3)
+
+### Changes Made
+- **My Borrowing Dashboard Page (`8:535`)**:
+  - Created [`MyBorrowingPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/MyBorrowingPage.tsx) powered by `GET /api/v1/me/borrowing`, `POST /api/v1/loans/:id/renew`, and `DELETE /api/v1/holds/:id`:
+    - **Current loans section**: Displays active loans (*Wonder* `BR-2098`, *A Brief History of Time* `BR-2106`) with due dates, days-left badges, renewal eligibility messages, and interactive `"Renew for 7 days"` button that extends the due date by `+7` calendar days and transitions to `"Renewed once"`.
+    - **Hold requests section**: Displays active student holds (`HLD-1042` on *The Midnight Library*) with assigned copy barcode (`WB-00421`), `COLLECT BY` card, and `"Cancel this hold"` action that releases the physical copy back to `Available`.
+    - **Borrowing history section**: Renders the Figma empty state (`"No returned books recorded yet"`) or returned loan history items.
+    - **Your account right sidebar**: Displays loan eligibility (`You can borrow`), `2 of 5 books borrowed` progress bar, overdue counter, `Fines & charges` (`0.00`), and `Quick notice` card.
+- **Route Finalization**:
+  - Updated [src/App.tsx](file:///Users/qcl/personal/projects/BookBorrow/src/App.tsx) to connect `/my-borrowing` (`MyBorrowingPage`) and catch-all fallback routing.
+
+### Suggested Commit Message
+```text
+feat(my-borrowing): implement My Borrowing dashboard with online loan renewal and hold management
+
+- Build MyBorrowingPage matching Figma frame 8:535 connected to GET /api/v1/me/borrowing
+- Implement 1-click online loan renewal (+7 days) via POST /api/v1/loans/:id/renew
+- Support hold cancellation from My Borrowing via DELETE /api/v1/holds/:id
+- Render Your Account loan quota progress bar, Fines & charges summary, and Borrowing history
+```
