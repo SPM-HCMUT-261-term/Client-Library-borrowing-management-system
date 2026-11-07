@@ -11,46 +11,35 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { MockDevToolbar } from './components/MockDevToolbar';
 import { GuestLandingPage } from './pages/GuestLandingPage';
 import { LoginPage } from './pages/LoginPage';
+import { StudentHomePage } from './pages/StudentHomePage';
+import { BookCatalogPage } from './pages/BookCatalogPage';
 
 const PlaceholderSignedInView: React.FC<{ title: string; subtitle: string }> = ({
   title,
   subtitle,
 }) => {
-  const { user, logout } = useAuth();
   return (
     <div className="py-12">
       <div className="rounded-2xl bg-brand-beige border border-brand-border p-8 space-y-4">
         <span className="text-[11px] font-semibold tracking-wider uppercase text-brand-teal">
-          AUTHENTICATED SESSION ACTIVE
+          UPCOMING MILESTONE ROUTE
         </span>
         <h1 className="font-serif text-[32px] text-brand-ink">{title}</h1>
         <p className="text-[14px] text-brand-slate max-w-xl">{subtitle}</p>
-        {user && (
-          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs">
-            <span className="px-3 py-1.5 rounded-lg bg-white border border-brand-border font-medium text-brand-ink">
-              Signed in as: {user.fullName} ({user.accountId} · {user.role})
-            </span>
-            <Link
-              to="/books"
-              className="px-3.5 py-1.5 rounded-lg bg-brand-teal text-white font-semibold hover:bg-brand-tealHover"
-            >
-              Book catalog (/books)
-            </Link>
-            <Link
-              to="/my-borrowing"
-              className="px-3.5 py-1.5 rounded-lg bg-white border border-brand-border text-brand-ink font-medium hover:border-brand-teal"
-            >
-              My borrowing (/my-borrowing)
-            </Link>
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className="px-3.5 py-1.5 rounded-lg bg-white border border-brand-border text-red-700 font-medium hover:bg-red-50"
-            >
-              Sign out to return to Guest Landing
-            </button>
-          </div>
-        )}
+        <div className="pt-2 flex flex-wrap items-center gap-3 text-xs">
+          <Link
+            to="/books"
+            className="px-3.5 py-1.5 rounded-lg bg-brand-teal text-white font-semibold hover:bg-brand-tealHover"
+          >
+            ← Back to Book catalog (/books)
+          </Link>
+          <Link
+            to="/"
+            className="px-3.5 py-1.5 rounded-lg bg-white border border-brand-border text-brand-ink font-medium hover:border-brand-teal"
+          >
+            Home (/)
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -72,27 +61,10 @@ const AppRoutes: React.FC = () => {
       <Routes>
         <Route
           path="/"
-          element={
-            user ? (
-              <PlaceholderSignedInView
-                title={`Good morning, ${user.fullName.split(' ')[0]}.`}
-                subtitle="Student Home Page & Book Catalog will be implemented in Milestone 4."
-              />
-            ) : (
-              <GuestLandingPage />
-            )
-          }
+          element={user ? <StudentHomePage /> : <GuestLandingPage />}
         />
         <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/books"
-          element={
-            <PlaceholderSignedInView
-              title="The Book Catalog (/books)"
-              subtitle="Ready for Milestone 4 implementation."
-            />
-          }
-        />
+        <Route path="/books" element={<BookCatalogPage />} />
         <Route
           path="/books/:id"
           element={

@@ -83,3 +83,31 @@ feat(guest-auth): implement Guest Landing page and 2-step Role & Credentials Sig
 - Connect POST /api/v1/auth/login with role validation, error banners, and password visibility toggle
 - Add dev-mode Demo Accounts quick-fill bar for testing student, overdue, inactive, and staff logins
 ```
+
+---
+
+## Milestone 4: Student Home & Book Catalog Browsing ("Student view" Part 1)
+
+### Changes Made
+- **Student Home Page (`6:2053`)**:
+  - Created [`StudentHomePage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/StudentHomePage.tsx) implementing:
+    - Personalized greeting strip (`"Good morning, Maya."` + `"Thursday, 15 October 2026"`).
+    - Hero search card (`"Search by title, author, ISBN or keyword"` + `"Search books"` button) and quick explore links (`Fiction ↗`, `Science ↗`, `History ↗`, `Graphic novels ↗`) navigating to `/books?...`.
+    - `"Find it online. Borrow it at the library."` 3-step strip.
+    - `"A few stories from our shelves"` section fetched from `GET /api/v1/books/featured?limit=4`, linking each card directly to `/books/:id`.
+- **Book Catalog Page (`6:2206`)**:
+  - Created [`BookCatalogPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/BookCatalogPage.tsx) implementing:
+    - Search bar with clear (`×`) button and URL query parameter synchronization (`?q=&category=&genre=&language=&availableNow=&sortBy=&page=`).
+    - Collapsible left filter sidebar (`Availability: Available now`, `Category`, `Genre`, `Language`, plus `Reset all`), strictly following [docs/API_Contract.md](file:///Users/qcl/personal/projects/BookBorrow/docs/API_Contract.md) (no waiting queues).
+    - Active removable filter chips, result count header, `Sort by` dropdown (`Relevance`, `Title (A–Z)`, `Published year`), 3-column book card grid with derived stock pills (`• N available` vs `• All copies on loan`), and pagination controls.
+- **Route Integration**:
+  - Updated [src/App.tsx](file:///Users/qcl/personal/projects/BookBorrow/src/App.tsx) to render `StudentHomePage` at `/` when authenticated and `BookCatalogPage` at `/books`.
+
+### Suggested Commit Message
+```text
+feat(student-catalog): implement Student Home page and Book Catalog search, filter, and pagination
+
+- Build StudentHomePage matching Figma frame 6:2053 with search bar, quick category links, and featured shelves
+- Build BookCatalogPage matching Figma frame 6:2206 connected to GET /api/v1/books
+- Support URL-synced search, Availability/Category/Genre/Language filters, sorting, and pagination
+```
