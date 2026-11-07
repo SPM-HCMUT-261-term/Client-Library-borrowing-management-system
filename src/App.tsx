@@ -1,139 +1,176 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { Layout, LayoutUser } from './components/Layout';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Layout } from './components/Layout';
 import { BookCoverGraphic } from './components/BookCoverGraphic';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { MockDevToolbar } from './components/MockDevToolbar';
+import {
+  getFeaturedBooksApi,
+  getBooksApi,
+  getBookByIdApi,
+  getMyBorrowingApi,
+} from './api/endpoints';
+import { FeaturedBookItem } from './types/api';
 
-const DEMO_MAYA: LayoutUser = {
-  _id: '671a9b2c8f1b2c0015a4e901',
-  accountId: 'S10428',
-  fullName: 'Maya Chen',
-  initials: 'MC',
-  role: 'student',
-  yearGroup: 'Year 10',
-  activeLoansCount: 2,
-  maxLoansLimit: 5,
-};
+const Milestone2NetworkPreview: React.FC<{ routeTitle: string }> = ({
+  routeTitle,
+}) => {
+  const { user, login, logout } = useAuth();
+  const [featured, setFeatured] = useState<FeaturedBookItem[]>([]);
+  const [apiOutput, setApiOutput] = useState<string>(
+    'Click any endpoint button below to fire a real fetch() call through MSW...',
+  );
+  const [loading, setLoading] = useState(false);
 
-const ScaffoldPreview: React.FC<{
-  title: string;
-  subtitle: string;
-  navVariant: 'guest' | 'auth' | 'student';
-  onToggleMode: (mode: 'guest' | 'auth' | 'student') => void;
-}> = ({ title, subtitle, navVariant, onToggleMode }) => {
-  const sampleBooks = [
-    { title: 'The Midnight Library', author: 'Matt Haig' },
-    { title: 'The Book Thief', author: 'Markus Zusak' },
-    { title: 'The Hobbit', author: 'J.R.R. Tolkien' },
-    { title: 'The House on Mango Street', author: 'Sandra Cisneros' },
-    { title: 'A Wrinkle in Time', author: "Madeleine L'Engle" },
-    { title: 'The Giver', author: 'Lois Lowry' },
-  ];
+  useEffect(() => {
+    void getFeaturedBooksApi(4).then(setFeatured).catch(console.error);
+  }, []);
+
+  const runProbe = async (label: string, fn: () => Promise<unknown>) => {
+    setLoading(true);
+    try {
+      const res = await fn();
+      setApiOutput(`// ${label}\n` + JSON.stringify(res, null, 2));
+    } catch (err) {
+      setApiOutput(
+        `// ERROR in ${label}\n` +
+          JSON.stringify(
+            err instanceof Error
+              ? { name: err.name, message: err.message, ...(err as object) }
+              : err,
+            null,
+            2,
+          ),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="py-10 space-y-10">
-      <div className="bg-brand-beige rounded-2xl p-8 border border-brand-border flex flex-col lg:flex-row items-center justify-between gap-8">
-        <div className="space-y-4 max-w-xl">
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-brand-teal">
-            MILESTONE 1 · DESIGN SYSTEM &amp; SHELL READY
-          </span>
-          <h1 className="font-serif text-[36px] leading-tight text-brand-ink">
-            {title}
-          </h1>
-          <p className="text-[15px] text-brand-slate leading-relaxed">
-            {subtitle}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <span className="text-xs font-medium text-brand-slate mr-1">
-              Preview Header Mode:
+    <div className="py-10 space-y-8">
+      <div className="bg-brand-beige rounded-2xl p-8 border border-brand-border space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-brand-teal">
+              MILESTONE 2 · MSW v2 NETWORK LAYER &amp; API CLIENT READY
             </span>
-            {(['guest', 'auth', 'student'] as const).map((m) => (
+            <h1 className="font-serif text-[32px] text-brand-ink mt-1">
+              {routeTitle}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {user ? (
               <button
-                key={m}
                 type="button"
-                onClick={() => onToggleMode(m)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                  navVariant === m
-                    ? 'bg-brand-teal text-white'
-                    : 'bg-white text-brand-ink border border-brand-border hover:bg-brand-mint'
-                }`}
+                onClick={() => void logout()}
+                className="px-4 py-2 rounded-lg bg-white border border-brand-border text-xs font-semibold text-brand-ink hover:bg-red-50 hover:text-red-700"
               >
-                {m} Header
+                Sign out ({user.fullName} · {user.accountId})
               </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-2 pt-2 text-xs">
-            <Link
-              to="/"
-              className="px-3 py-1.5 rounded-md bg-white border border-brand-border hover:border-brand-teal"
-            >
-              / (Home)
-            </Link>
-            <Link
-              to="/login"
-              className="px-3 py-1.5 rounded-md bg-white border border-brand-border hover:border-brand-teal"
-            >
-              /login
-            </Link>
-            <Link
-              to="/books"
-              className="px-3 py-1.5 rounded-md bg-white border border-brand-border hover:border-brand-teal"
-            >
-              /books
-            </Link>
-            <Link
-              to="/books/9781786892737"
-              className="px-3 py-1.5 rounded-md bg-white border border-brand-border hover:border-brand-teal"
-            >
-              /books/:id
-            </Link>
-            <Link
-              to="/holds/HLD-1042/confirmed"
-              className="px-3 py-1.5 rounded-md bg-white border border-brand-border hover:border-brand-teal"
-            >
-              /holds/:id/confirmed
-            </Link>
-            <Link
-              to="/my-borrowing"
-              className="px-3 py-1.5 rounded-md bg-white border border-brand-border hover:border-brand-teal"
-            >
-              /my-borrowing
-            </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  void runProbe('POST /api/v1/auth/login (S10428)', () =>
+                    login({
+                      accountId: 'S10428',
+                      password: 'password123',
+                      role: 'student',
+                    }),
+                  )
+                }
+                className="px-4 py-2 rounded-lg bg-brand-teal text-white text-xs font-semibold hover:bg-brand-tealHover"
+              >
+                Test Login as Maya Chen (S10428)
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="relative rounded-xl overflow-hidden w-full lg:w-[360px] h-[240px] shrink-0 shadow-sm">
-          <img
-            src="/images/reading-room.png"
-            alt="Westbridge School Library reading room"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-md text-[12px] font-medium text-brand-ink shadow-sm">
-            A little curiosity goes a long way.
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() =>
+              void runProbe('GET /api/v1/books/featured?limit=4', () =>
+                getFeaturedBooksApi(4),
+              )
+            }
+            className="px-3 py-1.5 rounded-lg bg-white border border-brand-border text-xs font-medium hover:border-brand-teal"
+          >
+            GET /books/featured
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() =>
+              void runProbe('GET /api/v1/books?category=Fiction&q=fiction', () =>
+                getBooksApi({ category: 'Fiction', q: 'fiction' }),
+              )
+            }
+            className="px-3 py-1.5 rounded-lg bg-white border border-brand-border text-xs font-medium hover:border-brand-teal"
+          >
+            GET /books?category=Fiction
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() =>
+              void runProbe('GET /api/v1/books/book-midnight-library', () =>
+                getBookByIdApi('book-midnight-library'),
+              )
+            }
+            className="px-3 py-1.5 rounded-lg bg-white border border-brand-border text-xs font-medium hover:border-brand-teal"
+          >
+            GET /books/:id (Midnight Library)
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() =>
+              void runProbe('GET /api/v1/me/borrowing', () =>
+                getMyBorrowingApi(),
+              )
+            }
+            className="px-3 py-1.5 rounded-lg bg-white border border-brand-border text-xs font-medium hover:border-brand-teal"
+          >
+            GET /me/borrowing
+          </button>
         </div>
+
+        <pre className="bg-brand-ink text-brand-mint p-4 rounded-xl text-xs overflow-x-auto max-h-72 leading-relaxed">
+          {apiOutput}
+        </pre>
       </div>
 
-      {/* Figma Vector Book Covers Showcase */}
+      {/* Live Featured Books from GET /api/v1/books/featured */}
       <div className="space-y-4">
         <h2 className="font-serif text-[24px] text-brand-ink">
-          Figma Book Cover Vector Graphics
+          Live Featured Books (from <code>GET /api/v1/books/featured</code>)
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
-          {sampleBooks.map((b) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {featured.map((book) => (
             <div
-              key={b.title}
+              key={book._id}
               className="rounded-xl border border-brand-border bg-white overflow-hidden flex flex-col"
             >
-              <div className="bg-brand-beige py-6 flex items-center justify-center">
-                <BookCoverGraphic title={b.title} author={b.author} size="sm" />
+              <div className="bg-brand-beige py-7 flex items-center justify-center">
+                <BookCoverGraphic
+                  title={book.title}
+                  author={book.author}
+                  size="md"
+                />
               </div>
-              <div className="p-3.5 space-y-1">
-                <p className="font-serif font-semibold text-[14px] text-brand-ink line-clamp-1">
-                  {b.title}
+              <div className="p-5 space-y-1.5">
+                <h3 className="font-serif font-semibold text-[17px] text-brand-ink">
+                  {book.title}
+                </h3>
+                <p className="text-[13px] text-brand-slate">{book.author}</p>
+                <p className="text-[12px] text-brand-teal font-medium">
+                  {book.genre || book.category}
                 </p>
-                <p className="text-[12px] text-brand-slate">{b.author}</p>
               </div>
             </div>
           ))}
@@ -143,86 +180,69 @@ const ScaffoldPreview: React.FC<{
   );
 };
 
-export const App: React.FC = () => {
-  const [navVariant, setNavVariant] = useState<'guest' | 'auth' | 'student'>('guest');
+const AppRoutes: React.FC = () => {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+
+  const variant =
+    location.pathname === '/login'
+      ? 'auth'
+      : user
+        ? 'student'
+        : 'guest';
 
   return (
-    <BrowserRouter>
-      <Layout
-        variant={navVariant}
-        user={navVariant === 'student' ? DEMO_MAYA : null}
-        onLogout={() => setNavVariant('guest')}
-      >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ScaffoldPreview
-                title="Guest Landing & Student Home Shell"
-                subtitle="Route `/` is wired up with Lora & Inter typography, Figma color tokens, reading room photography, and vector book covers."
-                navVariant={navVariant}
-                onToggleMode={setNavVariant}
-              />
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <ScaffoldPreview
-                title="2-Step Role & Credentials Login Route (/login)"
-                subtitle="Ready for Milestone 3 implementation."
-                navVariant="auth"
-                onToggleMode={setNavVariant}
-              />
-            }
-          />
-          <Route
-            path="/books"
-            element={
-              <ScaffoldPreview
-                title="Book Catalog Route (/books)"
-                subtitle="Ready for Milestone 4 implementation."
-                navVariant="student"
-                onToggleMode={setNavVariant}
-              />
-            }
-          />
-          <Route
-            path="/books/:id"
-            element={
-              <ScaffoldPreview
-                title="Book Detail Route (/books/:id)"
-                subtitle="Ready for Milestone 5 implementation."
-                navVariant="student"
-                onToggleMode={setNavVariant}
-              />
-            }
-          />
-          <Route
-            path="/holds/:id/confirmed"
-            element={
-              <ScaffoldPreview
-                title="Hold Confirmed Route (/holds/:id/confirmed)"
-                subtitle="Ready for Milestone 5 implementation."
-                navVariant="student"
-                onToggleMode={setNavVariant}
-              />
-            }
-          />
-          <Route
-            path="/my-borrowing"
-            element={
-              <ScaffoldPreview
-                title="My Borrowing Route (/my-borrowing)"
-                subtitle="Ready for Milestone 6 implementation."
-                navVariant="student"
-                onToggleMode={setNavVariant}
-              />
-            }
-          />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+    <Layout variant={variant} user={user} onLogout={() => void logout()}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Milestone2NetworkPreview routeTitle="Home Route (/)" />
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <Milestone2NetworkPreview routeTitle="Login Route (/login)" />
+          }
+        />
+        <Route
+          path="/books"
+          element={
+            <Milestone2NetworkPreview routeTitle="Book Catalog Route (/books)" />
+          }
+        />
+        <Route
+          path="/books/:id"
+          element={
+            <Milestone2NetworkPreview routeTitle="Book Detail Route (/books/:id)" />
+          }
+        />
+        <Route
+          path="/holds/:id/confirmed"
+          element={
+            <Milestone2NetworkPreview routeTitle="Hold Confirmed Route (/holds/:id/confirmed)" />
+          }
+        />
+        <Route
+          path="/my-borrowing"
+          element={
+            <Milestone2NetworkPreview routeTitle="My Borrowing Route (/my-borrowing)" />
+          }
+        />
+      </Routes>
+      <MockDevToolbar />
+    </Layout>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 
