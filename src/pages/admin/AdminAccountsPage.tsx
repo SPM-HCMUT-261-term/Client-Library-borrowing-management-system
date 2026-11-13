@@ -1,6 +1,7 @@
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, UsersRound } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { CreateAccountModal } from '../../components/admin/CreateAccountModal';
 import { getAdminUsersApi } from '../../api/admin';
 import { ApiClientError } from '../../api/client';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
@@ -25,6 +26,9 @@ function formatDate(value: string) {
 }
 
 export const AdminAccountsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [createOpen, setCreateOpen] = useState(false);
   const [queryInput, setQueryInput] = useState('');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<'all' | UserRole>('all');
@@ -56,7 +60,8 @@ export const AdminAccountsPage: React.FC = () => {
 
   return (
     <div>
-      <AdminPageHeader breadcrumb="Home / Accounts" title="School accounts" description="Find school accounts, manage assigned roles, and review account access." icon={UsersRound} />
+      <AdminPageHeader breadcrumb="Home / Accounts" title="School accounts" description="Find school accounts, manage assigned roles, and review account access." icon={UsersRound} action={<button onClick={() => setCreateOpen(true)} className="h-10 px-5 rounded-md bg-brand-teal text-white text-[13px] font-semibold hover:bg-brand-tealHover">Create account</button>} />
+      {location.state?.message && <p role="status" className="mt-4 rounded-md bg-brand-mint p-3 text-[13px] text-brand-teal">{location.state.message}</p>}
       <section className="mt-[23px] rounded-[10px] border border-brand-border bg-white p-6 min-h-[618px]">
         <h2 className="text-[17px] leading-[25px] font-semibold">Account directory</h2>
         <p className="mt-0.5 text-[13px] text-brand-slate">School-issued accounts and their current access.</p>
@@ -106,6 +111,7 @@ export const AdminAccountsPage: React.FC = () => {
           {(result?.pagination.totalPages ?? 0) > 1 && <div className="flex items-center gap-2"><button aria-label="Previous page" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => p - 1)} className="w-8 h-8 border border-brand-border rounded flex items-center justify-center disabled:opacity-40"><ChevronLeft className="w-4 h-4" /></button><span>Page {page} of {result?.pagination.totalPages}</span><button aria-label="Next page" disabled={page >= (result?.pagination.totalPages ?? 1) || isLoading} onClick={() => setPage((p) => p + 1)} className="w-8 h-8 border border-brand-border rounded flex items-center justify-center disabled:opacity-40"><ChevronRight className="w-4 h-4" /></button></div>}
         </div>
       </section>
+      {createOpen && <CreateAccountModal onCancel={() => setCreateOpen(false)} onCreated={account => navigate(`/admin/accounts/${encodeURIComponent(account.accountId)}`, { state: { message: 'Account created successfully.' } })} />}
     </div>
   );
 };

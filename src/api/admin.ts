@@ -4,6 +4,7 @@ import {
   AdminUsersPage,
   GetAdminUsersParams,
   UpdateAdminUserBody,
+  CreateAdminUserBody,
 } from '../types/api';
 
 function normalizeAdminUser(user: AdminUser): AdminUser {
@@ -11,6 +12,21 @@ function normalizeAdminUser(user: AdminUser): AdminUser {
     ...user,
     _id: user._id ?? user.id ?? user.accountId,
   };
+}
+
+export async function createAdminUserApi(body: CreateAdminUserBody): Promise<AdminUser> {
+  const res = await apiRequest<AdminUser>('/admin/users', { method: 'POST', body: JSON.stringify(body) });
+  return normalizeAdminUser(res.data);
+}
+
+export async function resetAdminUserPasswordApi(id: string, newPassword: string): Promise<void> {
+  await apiRequest<void>(`/admin/users/${encodeURIComponent(id)}/reset-password`, {
+    method: 'POST', body: JSON.stringify({ newPassword }),
+  });
+}
+
+export async function deleteAdminUserApi(id: string): Promise<void> {
+  await apiRequest<void>(`/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 export async function getAdminUsersApi(
