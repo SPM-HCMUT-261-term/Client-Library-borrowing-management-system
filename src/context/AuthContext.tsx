@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { AuthSessionUser, LoginRequestBody } from '../types/api';
 import {
   AUTH_USER_KEY,
-  getStoredToken,
   setStoredToken,
 } from '../api/client';
 import { getMeApi, loginApi, logoutApi } from '../api/endpoints';
@@ -46,14 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const refreshUser = useCallback(async () => {
-    const token = getStoredToken();
-    if (!token) {
-      setUser(null);
-      setStoredUser(null);
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const profile = await getMeApi();
       const sessionUser: AuthSessionUser = {
@@ -85,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = useCallback(
     async (credentials: LoginRequestBody): Promise<AuthSessionUser> => {
       const session = await loginApi(credentials);
-      setStoredToken(session.accessToken);
+      setStoredToken(session.accessToken || null);
       setStoredUser(session.user);
       setUser(session.user);
       return session.user;
