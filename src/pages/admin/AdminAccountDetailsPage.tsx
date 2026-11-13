@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { UsersRound } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { AccountSecurityModal } from '../../components/admin/AccountSecurityModal';
+import { useAuth } from '../../context/AuthContext';
 import { getAdminUserApi, updateAdminUserApi } from '../../api/admin';
 import { ApiClientError } from '../../api/client';
 import { AdminModal } from '../../components/admin/AdminModal';
@@ -22,11 +24,15 @@ function borrowingLabel(account: AdminUser) {
 }
 
 export const AdminAccountDetailsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, logout } = useAuth();
+  const [securityAction, setSecurityAction] = useState<'reset' | 'delete' | null>(null);
   const { id = '' } = useParams();
   const [account, setAccount] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(location.state?.message || null);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('student');
@@ -109,8 +115,13 @@ export const AdminAccountDetailsPage: React.FC = () => {
             </dl>
 
             <div className="mt-2 pt-3 border-t border-brand-border flex flex-wrap gap-3">
+              <button type="button" onClick={() => setSecurityAction('reset')} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Reset password</button>
               <button type="button" onClick={() => { setSelectedRole(account.role); setRoleModalOpen(true); }} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Change role</button>
               <button type="button" onClick={() => setAccessModalOpen(true)} className={`h-10 px-5 rounded-md text-[13px] font-semibold ${account.status === 'Active' ? 'bg-[#A1372B] text-white' : 'border border-brand-border text-brand-teal'}`}>{account.status === 'Active' ? 'Lock account' : 'Unlock account'}</button>
+            </div>
+            <div className="mt-4">
+              <p className="text-[13px] text-brand-slate">Accounts with borrowing or reservation history cannot be deleted.</p>
+              <button type="button" onClick={() => setSecurityAction('delete')} className="mt-2 h-10 px-5 rounded-md bg-[#A1372B] hover:bg-[#842D23] text-[13px] font-semibold text-white">Delete account</button>
             </div>
           </section>
 
@@ -142,6 +153,13 @@ export const AdminAccountDetailsPage: React.FC = () => {
           </aside>
         </div>
       )}
+
+      {account && securityAction && <AccountSecurityModal account={account} action={securityAction} onCancel={() => setSecurityAction(null)} onSuccess={() => {
+        setSecurityAction(null);
+        if (securityAction === 'reset') { setSuccessMessage('Password reset successfully.'); return; }
+        if (account.accountId === user?.accountId) { void logout().then(() => navigate('/login', { replace: true })); return; }
+        navigate('/admin/accounts', { replace: true, state: { message: `Account ${account.accountId} deleted successfully.` } });
+      }} />}
 
       {account && roleModalOpen && (
         <AdminModal title={`Change ${account.fullName}’s role`} description={`This changes the permissions assigned to ${account.fullName} (${account.accountId}).`} confirmLabel="Save role" isSubmitting={isSubmitting} onCancel={() => setRoleModalOpen(false)} onConfirm={() => void saveUpdate(selectedRole, account.status)}>

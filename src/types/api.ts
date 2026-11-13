@@ -41,6 +41,14 @@ export interface ApiErrorResponse {
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 // Section 2.1 User Object
+export interface CreateAdminUserBody {
+  accountId: string;
+  fullName: string;
+  password: string;
+  role: UserRole;
+  yearGroup?: string | null;
+}
+
 export interface User {
   _id: string;
   accountId: string;
