@@ -41,6 +41,14 @@ export interface ApiErrorResponse {
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 // Section 2.1 User Object
+export interface CreateAdminUserBody {
+  accountId: string;
+  fullName: string;
+  password: string;
+  role: UserRole;
+  yearGroup?: string | null;
+}
+
 export interface User {
   _id: string;
   accountId: string;
@@ -125,8 +133,32 @@ export interface AuthSessionUser {
 }
 
 export interface AuthSession {
-  accessToken: string;
+  accessToken?: string;
   user: AuthSessionUser;
+}
+
+export interface AdminUser extends User {
+  id?: string;
+}
+
+export interface AdminUsersPage {
+  items: AdminUser[];
+  pagination: PaginationInfo;
+}
+
+export interface GetAdminUsersParams {
+  q?: string;
+  role?: 'all' | UserRole;
+  status?: 'all' | UserStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface UpdateAdminUserBody {
+  fullName: string;
+  role: UserRole;
+  yearGroup?: string | null;
+  status: UserStatus;
 }
 
 // Section 4.1: GET /books/featured

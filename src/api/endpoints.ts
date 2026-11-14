@@ -23,10 +23,13 @@ export async function loginApi(body: LoginRequestBody): Promise<AuthSession> {
 }
 
 export async function getMeApi(): Promise<User> {
-  const res = await apiRequest<User>('/auth/me', {
+  const res = await apiRequest<User & { id?: string }>('/auth/me', {
     method: 'GET',
   });
-  return res.data;
+  return {
+    ...res.data,
+    _id: res.data._id ?? res.data.id ?? '',
+  };
 }
 
 export async function logoutApi(): Promise<{ message?: string }> {

@@ -64,6 +64,7 @@ export async function apiRequest<T>(
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: options.credentials ?? 'include',
   });
 
   let payload: ApiResponse<T>;

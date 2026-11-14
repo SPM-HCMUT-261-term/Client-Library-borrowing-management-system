@@ -1,3 +1,4 @@
+import { adminHandlers } from './adminHandlers';
 import { http, HttpResponse, delay } from 'msw';
 import {
   addDaysToIsoDate,
@@ -85,6 +86,7 @@ function sanitizeUser(user: MockUserRecord) {
 }
 
 export const handlers = [
+  ...adminHandlers,
   // 3.1 POST /auth/login
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
     await delay(180);

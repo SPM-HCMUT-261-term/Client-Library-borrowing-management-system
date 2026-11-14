@@ -84,12 +84,12 @@ export const LoginPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await login({
+      const signedInUser = await login({
         accountId: accountId.trim(),
         password,
         role: selectedRole,
       });
-      navigate('/');
+      navigate(signedInUser.role === 'admin' ? '/admin' : '/');
     } catch (err) {
       if (err instanceof ApiClientError) {
         setErrorMessage(err.message);
