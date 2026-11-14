@@ -78,6 +78,7 @@ export const AdminAccountDetailsPage: React.FC = () => {
       );
       setRoleModalOpen(false);
       setAccessModalOpen(false);
+      if (updated.accountId === user?.accountId) await refreshUser();
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : 'Unable to update this account.');
     } finally {
@@ -173,6 +174,7 @@ export const AdminAccountDetailsPage: React.FC = () => {
       {account && roleModalOpen && (
         <AdminModal title={`Change ${account.fullName}’s role`} description={`This changes the permissions assigned to ${account.fullName} (${account.accountId}).`} confirmLabel="Save role" isSubmitting={isSubmitting} onCancel={() => setRoleModalOpen(false)} onConfirm={() => void saveUpdate(selectedRole, account.status)}>
           <p className="text-[13px] font-semibold">New role · Current role: {roleNames[account.role]}</p>
+          {error && <p role="alert" className="mt-3 text-[13px] text-red-800">{error}</p>}
           <div className="mt-4 grid grid-cols-3 gap-3">
             {(['student', 'staff', 'admin'] as UserRole[]).map((role) => <label key={role} className={`h-[38px] rounded-md border px-2.5 flex items-center gap-2 text-[13px] cursor-pointer ${selectedRole === role ? 'border-brand-teal bg-brand-mint font-semibold text-brand-teal' : 'border-brand-border'}`}><input type="radio" name="role" value={role} checked={selectedRole === role} onChange={() => setSelectedRole(role)} className="accent-[#17645F]" />{roleNames[role]}</label>)}
           </div>
