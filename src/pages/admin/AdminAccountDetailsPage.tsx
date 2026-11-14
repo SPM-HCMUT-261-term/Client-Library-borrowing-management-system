@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { UsersRound } from 'lucide-react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AccountSecurityModal } from '../../components/admin/AccountSecurityModal';
+import { EditAccountModal } from '../../components/admin/EditAccountModal';
 import { useAuth } from '../../context/AuthContext';
 import { getAdminUserApi, updateAdminUserApi } from '../../api/admin';
 import { ApiClientError } from '../../api/client';
@@ -26,7 +27,8 @@ function borrowingLabel(account: AdminUser) {
 export const AdminAccountDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+  const [editOpen, setEditOpen] = useState(false);
   const [securityAction, setSecurityAction] = useState<'reset' | 'delete' | null>(null);
   const { id = '' } = useParams();
   const [account, setAccount] = useState<AdminUser | null>(null);
@@ -109,12 +111,14 @@ export const AdminAccountDetailsPage: React.FC = () => {
             {error && <div role="alert" className="mt-4 rounded-md bg-red-50 px-3 py-3 text-[13px] text-red-800">{error}</div>}
 
             <dl className="mt-4">
+              {account.role === 'student' && <div className="min-h-[42px] grid grid-cols-[124px_1fr] sm:grid-cols-[175px_1fr] items-center"><dt className="text-[13px] text-brand-slate">Year group</dt><dd className="text-[14px] font-semibold">{account.yearGroup || 'Not specified'}</dd></div>}
               <div className="min-h-[42px] grid grid-cols-[124px_1fr] sm:grid-cols-[175px_1fr] items-center"><dt className="text-[13px] text-brand-slate">Assigned role</dt><dd className="text-[14px] font-semibold">{roleNames[account.role]}</dd></div>
               <div className="min-h-[42px] grid grid-cols-[124px_1fr] sm:grid-cols-[175px_1fr] items-center"><dt className="text-[13px] text-brand-slate">Account access</dt><dd className="text-[14px] font-semibold">{account.status === 'Active' ? 'Active' : 'Locked · Manual'}</dd></div>
               <div className="min-h-[42px] grid grid-cols-[124px_1fr] sm:grid-cols-[175px_1fr] items-center"><dt className="text-[13px] text-brand-slate">Borrowing access</dt><dd className="text-[14px] font-semibold">{borrowingLabel(account)}</dd></div>
             </dl>
 
             <div className="mt-2 pt-3 border-t border-brand-border flex flex-wrap gap-3">
+              <button type="button" onClick={() => setEditOpen(true)} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Edit details</button>
               <button type="button" onClick={() => setSecurityAction('reset')} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Reset password</button>
               <button type="button" onClick={() => { setSelectedRole(account.role); setRoleModalOpen(true); }} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Change role</button>
               <button type="button" onClick={() => setAccessModalOpen(true)} className={`h-10 px-5 rounded-md text-[13px] font-semibold ${account.status === 'Active' ? 'bg-[#A1372B] text-white' : 'border border-brand-border text-brand-teal'}`}>{account.status === 'Active' ? 'Lock account' : 'Unlock account'}</button>
@@ -159,6 +163,11 @@ export const AdminAccountDetailsPage: React.FC = () => {
         if (securityAction === 'reset') { setSuccessMessage('Password reset successfully.'); return; }
         if (account.accountId === user?.accountId) { void logout().then(() => navigate('/login', { replace: true })); return; }
         navigate('/admin/accounts', { replace: true, state: { message: `Account ${account.accountId} deleted successfully.` } });
+      }} />}
+
+      {account && editOpen && <EditAccountModal account={account} onCancel={() => setEditOpen(false)} onSaved={updated => {
+        setAccount(updated); setEditOpen(false); setSuccessMessage('Account details updated.');
+        if (updated.accountId === user?.accountId) void refreshUser();
       }} />}
 
       {account && roleModalOpen && (
