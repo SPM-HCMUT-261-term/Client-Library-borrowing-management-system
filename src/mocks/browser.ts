@@ -1,4 +1,7 @@
 import { setupWorker } from 'msw/browser';
-import { handlers } from './handlers';
+import { handlers, hybridHandlers } from './handlers';
 
-export const worker = setupWorker(...handlers);
+const activeHandlers =
+  import.meta.env.VITE_USE_MOCK === 'hybrid' ? hybridHandlers : handlers;
+
+export const worker = setupWorker(...activeHandlers);

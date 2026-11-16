@@ -1,15 +1,22 @@
 import { apiRequest } from './client';
 import {
+  AddCopyRequestBody,
+  AddCopyResult,
   AuthSession,
+  Book,
   BookDetail,
   CancelHoldResult,
   CatalogResult,
+  CreateBookRequestBody,
   FeaturedBookItem,
   GetBooksParams,
   HoldConfirmation,
   LoginRequestBody,
   MyBorrowingDashboard,
   RenewLoanResult,
+  UpdateBookRequestBody,
+  UpdateCopyRequestBody,
+  UpdateCopyResult,
   User,
 } from '../types/api';
 
@@ -79,6 +86,72 @@ export async function getBookByIdApi(id: string): Promise<BookDetail> {
     { method: 'GET' },
   );
   return res.data;
+}
+
+export async function createBookApi(body: CreateBookRequestBody): Promise<Book> {
+  const res = await apiRequest<Book>('/books', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+  return res.data;
+}
+
+export async function updateBookApi(
+  id: string,
+  body: UpdateBookRequestBody,
+): Promise<Book> {
+  const res = await apiRequest<Book>(`/books/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+  return res.data;
+}
+
+export async function deleteBookApi(
+  id: string,
+): Promise<{ message?: string }> {
+  const res = await apiRequest<null>(`/books/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  return { message: res.message };
+}
+
+// Route Group 3: Physical Copies (/copies & /books/:bookId/copies)
+export async function addCopyToBookApi(
+  bookId: string,
+  body: AddCopyRequestBody,
+): Promise<AddCopyResult> {
+  const res = await apiRequest<AddCopyResult>(
+    `/books/${encodeURIComponent(bookId)}/copies`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  );
+  return res.data;
+}
+
+export async function updateCopyApi(
+  id: string,
+  body: UpdateCopyRequestBody,
+): Promise<UpdateCopyResult> {
+  const res = await apiRequest<UpdateCopyResult>(
+    `/copies/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    },
+  );
+  return res.data;
+}
+
+export async function deleteCopyApi(
+  id: string,
+): Promise<{ message?: string }> {
+  const res = await apiRequest<null>(`/copies/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  return { message: res.message };
 }
 
 // Route Group 4: Student Borrowing, Hold & Renewal (/me, /holds, /loans)

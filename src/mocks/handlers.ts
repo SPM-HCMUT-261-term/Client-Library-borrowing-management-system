@@ -1,4 +1,6 @@
 import { adminHandlers } from './adminHandlers';
+import { inventoryHandlers } from './inventoryHandlers';
+import { AUTH_USER_KEY } from '../api/client';
 import { http, HttpResponse, delay } from 'msw';
 import {
   addDaysToIsoDate,
@@ -54,16 +56,30 @@ function getAuthenticatedUser(
   cookies?: Record<string, string>,
 ): MockUserRecord | null {
   const accountId = getAccountIdFromRequest(cookies);
-  if (!accountId) {
-    return null;
+  if (accountId) {
+    const user = db.users.find(
+      (u) => u.accountId.toLowerCase() === accountId.toLowerCase(),
+    );
+    if (!user || user.status !== 'Active') {
+      return null;
+    }
+    return syncUserCounters(user, db);
   }
-  const user = db.users.find(
-    (u) => u.accountId.toLowerCase() === accountId.toLowerCase(),
-  );
-  if (!user || user.status !== 'Active') {
-    return null;
+  try {
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    if (raw) {
+      const stored = JSON.parse(raw) as MockUserRecord;
+      if (stored?.accountId && stored.status === 'Active') {
+        const match = db.users.find(
+          (u) => u.accountId.toLowerCase() === stored.accountId.toLowerCase(),
+        );
+        return match ? syncUserCounters(match, db) : stored;
+      }
+    }
+  } catch {
+    // ignore storage errors
   }
-  return syncUserCounters(user, db);
+  return null;
 }
 
 function syncUserCounters(
@@ -87,8 +103,7 @@ function sanitizeUser(user: MockUserRecord) {
   return rest;
 }
 
-export const handlers = [
-  ...adminHandlers,
+const authHandlers = [
   // 3.1 POST /auth/login
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
     await delay(180);
@@ -202,7 +217,10 @@ export const handlers = [
       },
     );
   }),
+];
 
+export const hybridHandlers = [
+  ...inventoryHandlers,
   // 4.1 GET /books/featured
   http.get(`${API_BASE}/books/featured`, async ({ request }) => {
     await delay(120);
@@ -362,7 +380,7 @@ export const handlers = [
   }),
 
   // 4.3 GET /books/:id
-  http.get(`${API_BASE}/books/:id`, async ({ params, request }) => {
+  http.get(`${API_BASE}/books/:id`, async ({ params, request, cookies }) => {
     await delay(120);
     const idParam = String(params.id || '');
     const db = getMockDb();
@@ -378,7 +396,7 @@ export const handlers = [
       );
     }
 
-    const user = getAuthenticatedUser(request, db);
+    const user = getAuthenticatedUser(request, db, cookies);
     const stock = computeStockSummary(book._id, db.copies);
     const bookCopies = db.copies.filter((c) => c.bookId === book._id);
     const bookLoans = db.loans.filter((l) => l.bookId === book._id);
@@ -407,6 +425,7 @@ export const handlers = [
         homeLocation: c.homeLocation,
         state: c.state,
         condition: c.condition,
+        notes: c.notes,
         displayLocation,
         activeLoan:
           user?.role === 'staff' && activeLoanRecord
@@ -920,3 +939,5 @@ export const handlers = [
     });
   }),
 ];
+
+export const handlers = [...adminHandlers, ...authHandlers, ...hybridHandlers];

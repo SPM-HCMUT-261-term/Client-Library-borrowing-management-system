@@ -23,6 +23,10 @@ import { AdminHomePage } from './pages/admin/AdminHomePage';
 import { AdminAccountsPage } from './pages/admin/AdminAccountsPage';
 import { AdminAccountDetailsPage } from './pages/admin/AdminAccountDetailsPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
+import { StaffLayout } from './components/staff/StaffLayout';
+import { StaffHomePage } from './pages/staff/StaffHomePage';
+import { StaffInventoryPage } from './pages/staff/StaffInventoryPage';
+import { StaffBookDetailPage } from './pages/staff/StaffBookDetailPage';
 
 const AppRoutes: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
@@ -65,8 +69,29 @@ const AppRoutes: React.FC = () => {
     );
   }
 
+  if (location.pathname.startsWith('/staff')) {
+    if (!user) return <Navigate to="/login" replace />;
+    if (user.role !== 'staff') return <Navigate to="/" replace />;
+
+    return (
+      <StaffLayout>
+        <MockDevToolbar />
+        <Routes>
+          <Route path="/staff" element={<StaffHomePage />} />
+          <Route path="/staff/books" element={<StaffInventoryPage />} />
+          <Route path="/staff/books/:id" element={<StaffBookDetailPage />} />
+          <Route path="/staff/*" element={<Navigate to="/staff" replace />} />
+        </Routes>
+      </StaffLayout>
+    );
+  }
+
   if (user?.role === 'admin' && location.pathname !== '/login') {
     return <Navigate to="/admin" replace />;
+  }
+
+  if (user?.role === 'staff' && location.pathname !== '/login') {
+    return <Navigate to="/staff" replace />;
   }
 
   const variant =

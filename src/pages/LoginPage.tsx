@@ -61,7 +61,9 @@ export const LoginPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showForgotHint, setShowForgotHint] = useState<boolean>(false);
 
-  const isMockEnabled = import.meta.env.VITE_USE_MOCK !== 'false';
+  const isMockEnabled =
+    import.meta.env.VITE_USE_MOCK !== 'false' &&
+    import.meta.env.VITE_USE_MOCK !== 'hybrid';
   const activeRoleOption =
     ROLE_OPTIONS.find((r) => r.role === selectedRole) || ROLE_OPTIONS[0];
   const ActiveRoleIcon = activeRoleOption.icon;
@@ -89,7 +91,13 @@ export const LoginPage: React.FC = () => {
         password,
         role: selectedRole,
       });
-      navigate(signedInUser.role === 'admin' ? '/admin' : '/');
+      navigate(
+        signedInUser.role === 'admin'
+          ? '/admin'
+          : signedInUser.role === 'staff'
+            ? '/staff'
+            : '/',
+      );
     } catch (err) {
       if (err instanceof ApiClientError) {
         setErrorMessage(err.message);

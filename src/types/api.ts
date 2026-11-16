@@ -229,6 +229,7 @@ export interface BookDetailCopy {
   homeLocation: string;
   state: CopyState;
   condition: CopyCondition;
+  notes?: string | null;
   displayLocation: string;
   activeLoan: {
     borrowCode: string;
@@ -276,6 +277,70 @@ export interface BookDetail {
   deleteDisabledReason: string | null;
   copies: BookDetailCopy[];
   viewerContext: ViewerContext | null;
+}
+
+// Section 4.4–4.6: Staff Book Title CRUD
+export interface CreateBookRequestBody {
+  title: string;
+  author: string;
+  isbn: string;
+  category: BookCategory;
+  keywords?: string[];
+  publisher?: string | null;
+  genre?: string | null;
+  publishedYear?: number | null;
+  language?: BookLanguage;
+  format?: string;
+  pageCount?: number | null;
+  description?: string | null;
+  coverImageUrl?: string | null;
+  shelfReference?: string | null;
+}
+
+export interface UpdateBookRequestBody {
+  title: string;
+  author: string;
+  isbn: string;
+  category: BookCategory;
+  publisher?: string | null;
+  keywords?: string[];
+  genre?: string | null;
+  publishedYear?: number | null;
+  language?: BookLanguage;
+  format?: string;
+  pageCount?: number | null;
+  description?: string | null;
+  coverImageUrl?: string | null;
+  shelfReference?: string | null;
+}
+
+// Section 5.1–5.3: Staff Physical Copy CRUD
+export interface AddCopyRequestBody {
+  copyCode: string;
+  homeLocation: string;
+  initialState: 'Available' | 'Damaged' | 'Lost';
+  condition: CopyCondition;
+  notes?: string | null;
+}
+
+export interface AddCopyResult {
+  copy: PhysicalCopy;
+  updatedStockSummary: Pick<
+    StockSummary,
+    'totalCopies' | 'availableCopies' | 'borrowedCopies'
+  >;
+}
+
+export interface UpdateCopyRequestBody {
+  homeLocation: string;
+  state: 'Available' | 'Damaged' | 'Lost';
+  condition: CopyCondition;
+  notes?: string | null;
+}
+
+export interface UpdateCopyResult {
+  copy: PhysicalCopy;
+  updatedStockSummary: Omit<StockSummary, 'isAvailableNow'>;
 }
 
 // Section 6.1: GET /me/borrowing

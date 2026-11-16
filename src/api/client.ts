@@ -1,6 +1,6 @@
 import { ApiResponse } from '../types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || '/api/v1';
 export const AUTH_USER_KEY = 'bookborrow_auth_user';
 export const AUTH_FORBIDDEN_EVENT = 'bookborrow:forbidden';
 
