@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AuthSessionUser, LoginRequestBody } from '../types/api';
-import { AUTH_USER_KEY } from '../api/client';
+import { AUTH_FORBIDDEN_EVENT, AUTH_USER_KEY } from '../api/client';
 import { getMeApi, loginApi, logoutApi } from '../api/endpoints';
 
 interface AuthContextValue {
@@ -69,6 +69,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     void refreshUser();
   }, [refreshUser]);
+
+  useEffect(() => {
+    const handleForbidden = () => {
+      setStoredUser(null);
+      setUser(null);
+    };
+    window.addEventListener(AUTH_FORBIDDEN_EVENT, handleForbidden);
+    return () => window.removeEventListener(AUTH_FORBIDDEN_EVENT, handleForbidden);
+  }, []);
 
   const login = useCallback(
     async (credentials: LoginRequestBody): Promise<AuthSessionUser> => {

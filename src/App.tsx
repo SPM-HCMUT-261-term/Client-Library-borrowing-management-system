@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   BrowserRouter,
   Routes,
   Route,
   useLocation,
+  useNavigate,
   Navigate,
 } from 'react-router-dom';
+import { AUTH_FORBIDDEN_EVENT } from './api/client';
 import { Layout } from './components/Layout';
 import { MockDevToolbar } from './components/MockDevToolbar';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -25,6 +27,17 @@ import { AdminProfilePage } from './pages/admin/AdminProfilePage';
 const AppRoutes: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleForbidden = () => {
+      if (location.pathname !== '/login') {
+        navigate('/login', { replace: true });
+      }
+    };
+    window.addEventListener(AUTH_FORBIDDEN_EVENT, handleForbidden);
+    return () => window.removeEventListener(AUTH_FORBIDDEN_EVENT, handleForbidden);
+  }, [location.pathname, navigate]);
 
   if (isLoading) {
     return (

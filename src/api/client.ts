@@ -2,6 +2,7 @@ import { ApiResponse } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const AUTH_USER_KEY = 'bookborrow_auth_user';
+export const AUTH_FORBIDDEN_EVENT = 'bookborrow:forbidden';
 
 export class ApiClientError extends Error {
   public readonly status: number;
@@ -54,6 +55,16 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok || !payload.success) {
+    if (response.status === 403 && !endpoint.includes('/auth/login')) {
+      try {
+        localStorage.removeItem(AUTH_USER_KEY);
+      } catch {
+        // ignore storage errors
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(AUTH_FORBIDDEN_EVENT));
+      }
+    }
     const rawError = !payload.success ? payload.error : undefined;
     const errObj =
       typeof rawError === 'string'
