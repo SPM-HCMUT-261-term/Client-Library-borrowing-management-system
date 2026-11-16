@@ -29,13 +29,13 @@ const { handlers } = await import('../src/mocks/handlers.ts');
 const { getMockDb, saveMockDb } = await import('../src/mocks/db.ts');
 const server = setupServer(...handlers);
 server.listen({ onUnhandledRequest: 'error' });
-async function request(path, method = 'GET', body, token = 'mock-jwt-ADM001') {
-  const res = await fetch(`http://localhost/api/v1${path}`, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
+async function request(path, method = 'GET', body, sessionAccountId = 'ADM001') {
+  const res = await fetch(`http://localhost/api/v1${path}`, { method, headers: { 'Content-Type': 'application/json', Cookie: `bookborrow_mock_session=${sessionAccountId}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
   return { status: res.status, body: await res.json() };
 }
 try {
   const body = { accountId: 'TEST001', fullName: 'Test Student', role: 'student', yearGroup: 'Year 10', password: 'initial-test' };
-  assert.equal((await request('/admin/users', 'POST', body, 'mock-jwt-S10428')).status, 403);
+  assert.equal((await request('/admin/users', 'POST', body, 'S10428')).status, 403);
   assert.equal((await request('/admin/users', 'POST', { ...body, fullName: '' })).status, 400);
   const created = await request('/admin/users', 'POST', body);
   assert.equal(created.status, 201); assert.equal(created.body.data.password, undefined);

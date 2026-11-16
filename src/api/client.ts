@@ -1,7 +1,6 @@
 import { ApiResponse } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-export const AUTH_TOKEN_KEY = 'bookborrow_access_token';
 export const AUTH_USER_KEY = 'bookborrow_auth_user';
 
 export class ApiClientError extends Error {
@@ -23,38 +22,14 @@ export class ApiClientError extends Error {
   }
 }
 
-export function getStoredToken(): string | null {
-  try {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function setStoredToken(token: string | null): void {
-  try {
-    if (token) {
-      localStorage.setItem(AUTH_TOKEN_KEY, token);
-    } else {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-    }
-  } catch {
-    // ignore storage errors
-  }
-}
-
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<{ data: T; message?: string }> {
-  const token = getStoredToken();
   const headers = new Headers(options.headers || {});
 
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json');
-  }
-  if (token && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`);
   }
 
   const url = endpoint.startsWith('http')

@@ -43,28 +43,17 @@ function errorResponse(
 }
 
 function getAccountIdFromRequest(
-  request: Request,
   cookies?: Record<string, string>,
 ): string | null {
-  if (cookies?.bookborrow_mock_session) {
-    return cookies.bookborrow_mock_session;
-  }
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.replace('Bearer ', '').trim();
-    if (token.startsWith('mock-jwt-')) {
-      return token.replace('mock-jwt-', '');
-    }
-  }
-  return null;
+  return cookies?.bookborrow_mock_session || null;
 }
 
 function getAuthenticatedUser(
-  request: Request,
+  _request: Request,
   db: MockDatabase,
   cookies?: Record<string, string>,
 ): MockUserRecord | null {
-  const accountId = getAccountIdFromRequest(request, cookies);
+  const accountId = getAccountIdFromRequest(cookies);
   if (!accountId) {
     return null;
   }
@@ -162,7 +151,6 @@ export const handlers = [
       {
         success: true,
         data: {
-          accessToken: '',
           user: {
             _id: synced._id,
             accountId: synced.accountId,

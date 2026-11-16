@@ -91,7 +91,7 @@ Default password for all seeded demo accounts: `password123` (or use the 1-click
 │   └── mockServiceWorker.js         # MSW v2 service worker
 └── src/
     ├── api/
-    │   ├── client.ts                # Native fetch wrapper with Bearer token & envelope parser
+    │   ├── client.ts                # Native fetch wrapper with session cookies & envelope parser
     │   └── endpoints.ts             # Typed API functions for Auth, Books, Holds, and Loans
     ├── components/
     │   ├── BookCoverGraphic.tsx     # Vector book cover illustrations matching Figma

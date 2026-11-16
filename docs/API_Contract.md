@@ -62,9 +62,9 @@ This table summarizes all **28 endpoints** across the **6 route groups** for qui
 
 | # | Route Group | Endpoint Name | Method & Path | Access | Request Input (Params / Query / Body) | Response `data` Summary |
 | :-: | :--- | :--- | :--- | :---: | :--- | :--- |
-| **1** | **Auth** | [`login`](#31-login-post-authlogin) | `POST /auth/login` | Public | **Body:** `{ accountId, password, role }` | `{ accessToken, user }` |
-| **2** | **Auth** | [`getMe`](#32-getme-get-authme) | `GET /auth/me` | All Roles | *None (JWT Header)* | `User` profile & active loan counts |
-| **3** | **Auth** | [`logout`](#33-logout-post-authlogout) | `POST /auth/logout` | All Roles | *None (JWT Header)* | Confirmation message |
+| **1** | **Auth** | [`login`](#31-login-post-authlogin) | `POST /auth/login` | Public | **Body:** `{ accountId, password, role }` | `{ user }` *(sets session cookie)* |
+| **2** | **Auth** | [`getMe`](#32-getme-get-authme) | `GET /auth/me` | All Roles | *None (Session Cookie)* | `User` profile & active loan counts |
+| **3** | **Auth** | [`logout`](#33-logout-post-authlogout) | `POST /auth/logout` | All Roles | *None (Session Cookie)* | Confirmation message |
 | **4** | **Books** | [`getFeaturedBooks`](#41-getfeaturedbooks-get-booksfeatured) | `GET /books/featured` | Public | **Query:** `?limit=4` | Array of featured `Book` cards with `stockSummary` |
 | **5** | **Books** | [`getBooks`](#42-getbooks-get-books) | `GET /books` | Student / Staff | **Query:** `?q=&category=&genre=&language=&availableNow=&stock=&sortBy=&page=&limit=` | `{ items: Book[], pagination }` |
 | **6** | **Books** | [`getBookById`](#43-getbookbyid-get-booksid) | `GET /books/:id` | Student / Staff | **Param:** `:id` (`_id` or `isbn`) | Full `Book` metadata, `stockSummary`, `copies[]`, `viewerContext` |
@@ -74,7 +74,7 @@ This table summarizes all **28 endpoints** across the **6 route groups** for qui
 | **10** | **Copies** | [`addCopyToBook`](#51-addcopytobook-post-booksbookidcopies) | `POST /books/:bookId/copies` | Staff | **Param:** `:bookId` · **Body:** `{ copyCode*, homeLocation*, initialState*, condition*, notes? }` | `{ copy, updatedStockSummary }` |
 | **11** | **Copies** | [`updateCopy`](#52-updatecopy-put-copiesid) | `PUT /copies/:id` | Staff | **Param:** `:id` · **Body:** `{ homeLocation*, state*, condition*, notes? }` | `{ copy, updatedStockSummary }` |
 | **12** | **Copies** | [`deleteCopy`](#53-deletecopy-delete-copiesid) | `DELETE /copies/:id` | Staff | **Param:** `:id` (`_id` or `copyCode`) | Confirmation (`409` if copy has loan history) |
-| **13** | **Student** | [`getMyBorrowing`](#61-getmyborrowing-get-meborrowing) | `GET /me/borrowing` | Student | *None (JWT Header)* | `{ accountSummary, currentLoans[], holdRequests[], borrowingHistory[] }` |
+| **13** | **Student** | [`getMyBorrowing`](#61-getmyborrowing-get-meborrowing) | `GET /me/borrowing` | Student | *None (Session Cookie)* | `{ accountSummary, currentLoans[], holdRequests[], borrowingHistory[] }` |
 | **14** | **Student** | [`createHold`](#62-createhold-post-holds) | `POST /holds` | Student | **Body:** `{ bookId }` | `holdConfirmation` (`holdCode`, `collectBy`, `assignedCopy`, `book`) |
 | **15** | **Student / Staff** | [`cancelHold`](#63-cancelhold-delete-holdsid) | `DELETE /holds/:id` | Student / Staff | **Param:** `:id` (`_id` or `holdCode`) | `{ holdCode, status: "Cancelled", releasedCopyCode }` |
 | **16** | **Student** | [`renewLoan`](#64-renewloan-post-loansidrenew) | `POST /loans/:id/renew` | Student | **Param:** `:id` (`_id` or `borrowCode`) | `{ borrowCode, previousDueDate, newDueDate (+7d), renewalCount: 1 }` |
@@ -96,9 +96,9 @@ This table summarizes all **28 endpoints** across the **6 route groups** for qui
 ## 1. API Conventions & Standards
 
 ### 1.1 Authentication & Role Authorization
-Protected endpoints require a JWT Bearer token in the HTTP `Authorization` header:
+Protected endpoints use HTTP-only session cookies issued by `POST /auth/login` (`Set-Cookie`) and sent automatically by the client (`credentials: 'include'`):
 ```http
-Authorization: Bearer <accessToken>
+Cookie: connect.sid=<sessionId>
 ```
 Each endpoint specifies its access level:
 - **Public**: Accessible without authentication (e.g., Guest landing page, login).
@@ -228,7 +228,6 @@ All responses follow a consistent envelope structure based on `format.jpg`:
   - `+ success`: `boolean`
   - `+ data`: `authSession`
     - **Properties of `authSession`:**
-      - `+ accessToken`: `string` *(JWT token)*
       - `+ user`: `Object`
         - **Properties of `user`:**
           - `+ _id`: `string`
@@ -562,7 +561,7 @@ All responses follow a consistent envelope structure based on `format.jpg`:
 ### 6.1 `getMyBorrowing`: `(GET) /me/borrowing`
 - **Access:** Student Only (`student`)
 - **Description:** Retrieves all sections required for the Student *"My borrowing"* page (`StudentView` Page 5): account eligibility summary, current active loans (with online renewal eligibility), active hold requests, and returned borrowing history.
-- **Request Params / Query:** None *(student identified via JWT)*
+- **Request Params / Query:** None *(student identified via session cookie)*
 - **Response Data (`200 OK`):**
   - `+ success`: `boolean`
   - `+ data`: `myBorrowingDashboard`

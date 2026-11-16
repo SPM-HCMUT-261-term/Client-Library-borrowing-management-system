@@ -133,7 +133,6 @@ export interface AuthSessionUser {
 }
 
 export interface AuthSession {
-  accessToken?: string;
   user: AuthSessionUser;
 }
 

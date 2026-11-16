@@ -1,9 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AuthSessionUser, LoginRequestBody } from '../types/api';
-import {
-  AUTH_USER_KEY,
-  setStoredToken,
-} from '../api/client';
+import { AUTH_USER_KEY } from '../api/client';
 import { getMeApi, loginApi, logoutApi } from '../api/endpoints';
 
 interface AuthContextValue {
@@ -62,7 +59,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(sessionUser);
       setStoredUser(sessionUser);
     } catch {
-      setStoredToken(null);
       setStoredUser(null);
       setUser(null);
     } finally {
@@ -77,7 +73,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = useCallback(
     async (credentials: LoginRequestBody): Promise<AuthSessionUser> => {
       const session = await loginApi(credentials);
-      setStoredToken(session.accessToken || null);
       setStoredUser(session.user);
       setUser(session.user);
       return session.user;
@@ -91,7 +86,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       // Ignore logout network error and clear local state regardless
     } finally {
-      setStoredToken(null);
       setStoredUser(null);
       setUser(null);
     }

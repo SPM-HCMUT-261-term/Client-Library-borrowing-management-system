@@ -3,12 +3,8 @@ import { getMockDb, saveMockDb, MockUserRecord } from './db';
 import { CreateAdminUserBody, UpdateAdminUserBody } from '../types/api';
 
 const base = '/api/v1/admin/users';
-function allowed(request: Request, cookies?: Record<string, string>) {
-  let accountId = cookies?.bookborrow_mock_session || '';
-  if (!accountId) {
-    const token = request.headers.get('Authorization') || '';
-    accountId = token.replace('Bearer mock-jwt-', '');
-  }
+function allowed(_request: Request, cookies?: Record<string, string>) {
+  const accountId = cookies?.bookborrow_mock_session || '';
   return getMockDb().users.some(u => u.accountId.toLowerCase() === accountId.toLowerCase() && u.role === 'admin' && u.status === 'Active');
 }
 function failure(status: number, code: string, message: string) {
