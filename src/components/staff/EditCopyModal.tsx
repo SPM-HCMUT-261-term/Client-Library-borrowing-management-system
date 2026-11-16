@@ -120,7 +120,12 @@ export const EditCopyModal: React.FC<EditCopyModalProps> = ({
           </h2>
 
           <div className="mt-3.5 rounded-lg border border-brand-border bg-brand-canvas p-3 flex items-center gap-3">
-            <BookCoverGraphic title={book.title} author={book.author} size="xs" />
+            <BookCoverGraphic
+              title={book.title}
+              author={book.author}
+              coverKey={book.isbn}
+              size="xs"
+            />
             <div className="min-w-0">
               <p className="text-[14px] font-semibold text-brand-ink truncate">
                 {book.title}

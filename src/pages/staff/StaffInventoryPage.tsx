@@ -5,6 +5,7 @@ import { getBooksApi } from '../../api/endpoints';
 import { ApiClientError } from '../../api/client';
 import { BookCoverGraphic } from '../../components/BookCoverGraphic';
 import { AddBookModal } from '../../components/staff/AddBookModal';
+import { useToast } from '../../context/ToastContext';
 import {
   BookCategory,
   CatalogBookItem,
@@ -23,6 +24,7 @@ const CATEGORIES: Array<'All' | BookCategory> = [
 export const StaffInventoryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   const [queryInput, setQueryInput] = useState('');
   const [appliedQuery, setAppliedQuery] = useState('');
   const [category, setCategory] = useState<'All' | BookCategory>('All');
@@ -30,6 +32,7 @@ export const StaffInventoryPage: React.FC = () => {
     'all' | 'available' | 'unavailable'
   >('all');
   const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
 
   const [books, setBooks] = useState<CatalogBookItem[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -44,6 +47,13 @@ export const StaffInventoryPage: React.FC = () => {
     (location.state as { message?: string } | null)?.message || null,
   );
   const [addBookOpen, setAddBookOpen] = useState(false);
+
+  useEffect(() => {
+    const stateMsg = (location.state as { message?: string } | null)?.message;
+    if (stateMsg) {
+      showToast(stateMsg, 'success');
+    }
+  }, [location.state, showToast]);
 
   const loadBooks = useCallback(async () => {
     setIsLoading(true);
@@ -73,6 +83,24 @@ export const StaffInventoryPage: React.FC = () => {
   useEffect(() => {
     void loadBooks();
   }, [loadBooks]);
+
+  useEffect(() => {
+    setPageInput(String(pagination.currentPage));
+  }, [pagination.currentPage]);
+
+  const commitPageInput = () => {
+    const parsed = Number.parseInt(pageInput.trim(), 10);
+    if (Number.isNaN(parsed)) {
+      setPageInput(String(pagination.currentPage));
+      return;
+    }
+    const maxPage = Math.max(1, pagination.totalPages);
+    const clamped = Math.min(maxPage, Math.max(1, parsed));
+    setPageInput(String(clamped));
+    if (clamped !== page) {
+      setPage(clamped);
+    }
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,6 +275,7 @@ export const StaffInventoryPage: React.FC = () => {
                           <BookCoverGraphic
                             title={book.title}
                             author={book.author}
+                            coverKey={book.isbn}
                             size="xs"
                           />
                           <div className="min-w-0">
@@ -315,9 +344,26 @@ export const StaffInventoryPage: React.FC = () => {
             Available / total = Available copies ÷ all physical copies. Reserved, Borrowed, Damaged and Lost copies are not available.
           </span>
           <div className="flex items-center gap-2 shrink-0">
-            <span>
-              Page {pagination.currentPage} of {pagination.totalPages}
-            </span>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                commitPageInput();
+              }}
+              className="inline-flex items-center gap-1.5"
+            >
+              <label htmlFor="inventory-page-input">Page</label>
+              <input
+                id="inventory-page-input"
+                type="text"
+                inputMode="numeric"
+                aria-label="Go to page"
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onBlur={commitPageInput}
+                className="w-11 h-8 rounded border border-brand-border bg-white px-1.5 text-center text-[12px] font-semibold text-brand-ink focus:outline-none focus:border-brand-teal"
+              />
+              <span>of {pagination.totalPages}</span>
+            </form>
             <button
               type="button"
               disabled={pagination.currentPage <= 1}
@@ -345,6 +391,7 @@ export const StaffInventoryPage: React.FC = () => {
           onCancel={() => setAddBookOpen(false)}
           onCreated={(created) => {
             setAddBookOpen(false);
+            showToast(`Title "${created.title}" created with 0 copies.`, 'success');
             navigate(`/staff/books/${encodeURIComponent(created._id)}`, {
               state: {
                 message: `Title "${created.title}" created with 0 copies. Add physical copies below.`,

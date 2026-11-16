@@ -3,8 +3,28 @@ import React from 'react';
 export interface BookCoverGraphicProps {
   title: string;
   author?: string;
+  coverKey?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
+}
+
+const FALLBACK_PALETTE = [
+  { bg: '#17645F', text: '#F4EDDE' },
+  { bg: '#2C3E50', text: '#F7F1E5' },
+  { bg: '#5B3A29', text: '#F9F3E7' },
+  { bg: '#3E365B', text: '#EFEBF7' },
+  { bg: '#2F4858', text: '#EBF4F6' },
+  { bg: '#7A3E3E', text: '#FAF0EE' },
+  { bg: '#3D5A45', text: '#EFF6F0' },
+  { bg: '#4A4E69', text: '#F2E9E4' },
+] as const;
+
+function pickCoverColors(seed: string) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return FALLBACK_PALETTE[hash % FALLBACK_PALETTE.length];
 }
 
 /**
@@ -22,6 +42,7 @@ export interface BookCoverGraphicProps {
 export const BookCoverGraphic: React.FC<BookCoverGraphicProps> = ({
   title,
   author = '',
+  coverKey,
   size = 'md',
   className = '',
 }) => {
@@ -352,20 +373,32 @@ export const BookCoverGraphic: React.FC<BookCoverGraphicProps> = ({
     );
   }
 
-  // Fallback minimalist cover for additional titles
+  // Fallback text-only cover with deterministic persistent background color
+  const palette = pickCoverColors((coverKey || title || 'book').trim().toLowerCase());
+  const textScale =
+    size === 'xs'
+      ? { pad: 'p-1.5', title: 'text-[7px] leading-[9px]', author: 'text-[5.5px]' }
+      : size === 'sm'
+        ? { pad: 'p-2.5', title: 'text-[10px] leading-tight', author: 'text-[7px]' }
+        : size === 'lg'
+          ? { pad: 'p-5', title: 'text-[22px] leading-snug', author: 'text-[11px]' }
+          : { pad: 'p-3', title: 'text-xs leading-snug', author: 'text-[8px]' };
+
   return (
     <div
-      className={`relative overflow-hidden select-none shadow-[0_8px_20px_rgba(23,100,95,0.18)] bg-[#17645F] text-[#F4EDDE] p-3 flex flex-col justify-between items-center text-center ${dimensions[size]} ${className}`}
+      style={{ backgroundColor: palette.bg, color: palette.text }}
+      className={`relative overflow-hidden select-none shadow-[0_8px_20px_rgba(23,37,42,0.18)] flex flex-col justify-between items-center text-center ${textScale.pad} ${dimensions[size]} ${className}`}
     >
-      <div className="font-serif font-semibold text-xs leading-snug line-clamp-3 mt-1">
+      <div className={`font-serif font-semibold line-clamp-4 mt-0.5 ${textScale.title}`}>
         {title}
       </div>
-      <div className="w-8 h-8 rounded-full border border-[#F4EDDE]/60 flex items-center justify-center">
-        <div className="w-3 h-3 rounded-full bg-[#F4EDDE]" />
-      </div>
-      <div className="font-sans font-semibold text-[8px] tracking-wider uppercase opacity-90 truncate max-w-full">
-        {author}
-      </div>
+      {author && (
+        <div
+          className={`font-sans font-semibold tracking-wider uppercase opacity-90 truncate max-w-full ${textScale.author}`}
+        >
+          {author}
+        </div>
+      )}
     </div>
   );
 };

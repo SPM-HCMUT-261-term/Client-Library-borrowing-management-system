@@ -11,6 +11,7 @@ import { AUTH_FORBIDDEN_EVENT } from './api/client';
 import { Layout } from './components/Layout';
 import { MockDevToolbar } from './components/MockDevToolbar';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { GuestLandingPage } from './pages/GuestLandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { StudentHomePage } from './pages/StudentHomePage';
@@ -123,9 +124,11 @@ const AppRoutes: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus } from 'lucide-react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   deleteBookApi,
@@ -10,6 +10,7 @@ import { ApiClientError } from '../../api/client';
 import { BookCoverGraphic } from '../../components/BookCoverGraphic';
 import { AddCopyModal } from '../../components/staff/AddCopyModal';
 import { EditCopyModal } from '../../components/staff/EditCopyModal';
+import { useToast } from '../../context/ToastContext';
 import {
   BookCategory,
   BookDetail,
@@ -42,6 +43,7 @@ export const StaffBookDetailPage: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
 
   const [book, setBook] = useState<BookDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +56,7 @@ export const StaffBookDetailPage: React.FC = () => {
   const [publisher, setPublisher] = useState('');
   const [keywordsInput, setKeywordsInput] = useState('');
 
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isDeletingTitle, setIsDeletingTitle] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(
@@ -121,13 +124,16 @@ export const StaffBookDetailPage: React.FC = () => {
         keywords,
       });
       await loadBook();
+      setIsEditingTitle(false);
       setFeedbackMessage('Title metadata saved.');
+      showToast('Title metadata saved.', 'success');
     } catch (err) {
-      setActionError(
+      const msg =
         err instanceof ApiClientError
           ? err.message
-          : 'Unable to save title changes.',
-      );
+          : 'Unable to save title changes.';
+      setActionError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSavingTitle(false);
     }
@@ -144,11 +150,12 @@ export const StaffBookDetailPage: React.FC = () => {
         state: { message: `Title "${book.title}" deleted.` },
       });
     } catch (err) {
-      setActionError(
+      const msg =
         err instanceof ApiClientError
           ? err.message
-          : 'Unable to delete this book title.',
-      );
+          : 'Unable to delete this book title.';
+      setActionError(msg);
+      showToast(msg, 'error');
       setIsDeletingTitle(false);
     }
   };
@@ -187,7 +194,12 @@ export const StaffBookDetailPage: React.FC = () => {
 
       <div className="mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="flex items-center gap-4">
-          <BookCoverGraphic title={book.title} author={book.author} size="xs" />
+          <BookCoverGraphic
+            title={book.title}
+            author={book.author}
+            coverKey={book.isbn}
+            size="xs"
+          />
           <div>
             <h1 className="font-serif text-[30px] leading-[38px] font-semibold text-brand-ink">
               {book.title}
@@ -236,9 +248,21 @@ export const StaffBookDetailPage: React.FC = () => {
               Changes apply to the title, not to its loan records.
             </p>
           </div>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded bg-brand-beige text-[11px] font-semibold text-brand-slate">
-            Book record
-          </span>
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded bg-brand-beige text-[11px] font-semibold text-brand-slate">
+              Book record
+            </span>
+            {!isEditingTitle && (
+              <button
+                type="button"
+                onClick={() => setIsEditingTitle(true)}
+                className="h-9 px-3.5 rounded-md border border-brand-border bg-white inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-teal hover:border-brand-teal"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Edit title</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <form onSubmit={(e) => void handleSaveTitle(e)} className="mt-4">
@@ -250,9 +274,10 @@ export const StaffBookDetailPage: React.FC = () => {
               <input
                 type="text"
                 required
+                disabled={!isEditingTitle}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal"
+                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal disabled:bg-brand-canvas disabled:text-brand-ink/80"
               />
             </div>
 
@@ -263,9 +288,10 @@ export const StaffBookDetailPage: React.FC = () => {
               <input
                 type="text"
                 required
+                disabled={!isEditingTitle}
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
-                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal"
+                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal disabled:bg-brand-canvas disabled:text-brand-ink/80"
               />
             </div>
 
@@ -276,9 +302,10 @@ export const StaffBookDetailPage: React.FC = () => {
               <input
                 type="text"
                 required
+                disabled={!isEditingTitle}
                 value={isbn}
                 onChange={(e) => setIsbn(e.target.value)}
-                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] font-mono focus:outline-none focus:border-brand-teal"
+                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] font-mono focus:outline-none focus:border-brand-teal disabled:bg-brand-canvas disabled:text-brand-ink/80"
               />
             </div>
 
@@ -287,9 +314,10 @@ export const StaffBookDetailPage: React.FC = () => {
                 Category <span className="text-red-600">*</span>
               </label>
               <select
+                disabled={!isEditingTitle}
                 value={category}
                 onChange={(e) => setCategory(e.target.value as BookCategory)}
-                className="mt-1.5 w-full h-10 rounded-md border border-brand-border bg-white px-3 text-[13px] focus:outline-none focus:border-brand-teal"
+                className="mt-1.5 w-full h-10 rounded-md border border-brand-border bg-white px-3 text-[13px] focus:outline-none focus:border-brand-teal disabled:bg-brand-canvas disabled:text-brand-ink/80"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -305,9 +333,10 @@ export const StaffBookDetailPage: React.FC = () => {
               </label>
               <input
                 type="text"
+                disabled={!isEditingTitle}
                 value={publisher}
                 onChange={(e) => setPublisher(e.target.value)}
-                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal"
+                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal disabled:bg-brand-canvas disabled:text-brand-ink/80"
               />
             </div>
 
@@ -317,31 +346,37 @@ export const StaffBookDetailPage: React.FC = () => {
               </label>
               <input
                 type="text"
+                disabled={!isEditingTitle}
                 value={keywordsInput}
                 onChange={(e) => setKeywordsInput(e.target.value)}
                 placeholder="Contemporary, fantasy, choices"
-                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal"
+                className="mt-1.5 w-full h-10 rounded-md border border-brand-border px-3 text-[13px] focus:outline-none focus:border-brand-teal disabled:bg-brand-canvas disabled:text-brand-ink/80"
               />
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={isSavingTitle}
-              className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white disabled:opacity-60"
-            >
-              {isSavingTitle ? 'Saving…' : 'Save title changes'}
-            </button>
-            <button
-              type="button"
-              disabled={isSavingTitle}
-              onClick={() => syncFormFromBook(book)}
-              className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal"
-            >
-              Discard changes
-            </button>
-          </div>
+          {isEditingTitle && (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                disabled={isSavingTitle}
+                className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white disabled:opacity-60"
+              >
+                {isSavingTitle ? 'Saving…' : 'Save title changes'}
+              </button>
+              <button
+                type="button"
+                disabled={isSavingTitle}
+                onClick={() => {
+                  syncFormFromBook(book);
+                  setIsEditingTitle(false);
+                }}
+                className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal"
+              >
+                Discard changes
+              </button>
+            </div>
+          )}
         </form>
       </section>
 
@@ -507,7 +542,9 @@ export const StaffBookDetailPage: React.FC = () => {
           onCancel={() => setAddCopyOpen(false)}
           onAdded={(copyCode) => {
             setAddCopyOpen(false);
-            setFeedbackMessage(`Physical copy ${copyCode} added.`);
+            const msg = `Physical copy ${copyCode} added.`;
+            setFeedbackMessage(msg);
+            showToast(msg, 'success');
             void loadBook();
           }}
         />
@@ -521,6 +558,7 @@ export const StaffBookDetailPage: React.FC = () => {
           onUpdated={(msg) => {
             setEditingCopy(null);
             setFeedbackMessage(msg);
+            showToast(msg, 'success');
             void loadBook();
           }}
         />

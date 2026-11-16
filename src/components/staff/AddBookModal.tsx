@@ -101,6 +101,7 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
             <BookCoverGraphic
               title={title.trim() || 'New book title'}
               author={author.trim() || 'Author'}
+              coverKey={isbn.trim() || undefined}
               size="xs"
             />
             <div className="min-w-0">
