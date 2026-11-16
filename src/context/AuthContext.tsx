@@ -47,8 +47,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const refreshUser = useCallback(async () => {
     try {
       const profile = await getMeApi();
+      const rawId = (profile as { _id?: string; id?: string })._id ?? (profile as { id?: string }).id ?? '';
       const sessionUser: AuthSessionUser = {
-        _id: profile._id,
+        _id: rawId,
         accountId: profile.accountId,
         fullName: profile.fullName,
         initials: profile.initials,

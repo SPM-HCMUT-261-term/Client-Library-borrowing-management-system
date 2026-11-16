@@ -42,19 +42,32 @@ function errorResponse(
   );
 }
 
+function getAccountIdFromRequest(
+  request: Request,
+  cookies?: Record<string, string>,
+): string | null {
+  if (cookies?.bookborrow_mock_session) {
+    return cookies.bookborrow_mock_session;
+  }
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (token.startsWith('mock-jwt-')) {
+      return token.replace('mock-jwt-', '');
+    }
+  }
+  return null;
+}
+
 function getAuthenticatedUser(
   request: Request,
   db: MockDatabase,
+  cookies?: Record<string, string>,
 ): MockUserRecord | null {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const accountId = getAccountIdFromRequest(request, cookies);
+  if (!accountId) {
     return null;
   }
-  const token = authHeader.replace('Bearer ', '').trim();
-  if (!token.startsWith('mock-jwt-')) {
-    return null;
-  }
-  const accountId = token.replace('mock-jwt-', '');
   const user = db.users.find(
     (u) => u.accountId.toLowerCase() === accountId.toLowerCase(),
   );
@@ -145,30 +158,37 @@ export const handlers = [
     const synced = syncUserCounters(user, db);
     saveMockDb(db);
 
-    return HttpResponse.json({
-      success: true,
-      data: {
-        accessToken: `mock-jwt-${synced.accountId}`,
-        user: {
-          _id: synced._id,
-          accountId: synced.accountId,
-          fullName: synced.fullName,
-          initials: synced.initials,
-          role: synced.role,
-          status: synced.status,
-          yearGroup: synced.yearGroup,
-          activeLoansCount: synced.activeLoansCount,
-          maxLoansLimit: synced.maxLoansLimit,
+    return HttpResponse.json(
+      {
+        success: true,
+        data: {
+          accessToken: '',
+          user: {
+            _id: synced._id,
+            accountId: synced.accountId,
+            fullName: synced.fullName,
+            initials: synced.initials,
+            role: synced.role,
+            status: synced.status,
+            yearGroup: synced.yearGroup,
+            activeLoansCount: synced.activeLoansCount,
+            maxLoansLimit: synced.maxLoansLimit,
+          },
         },
       },
-    });
+      {
+        headers: {
+          'Set-Cookie': `bookborrow_mock_session=${encodeURIComponent(synced.accountId)}; Path=/api/v1; SameSite=Lax`,
+        },
+      },
+    );
   }),
 
   // 3.2 GET /auth/me
-  http.get(`${API_BASE}/auth/me`, async ({ request }) => {
+  http.get(`${API_BASE}/auth/me`, async ({ request, cookies }) => {
     await delay(100);
     const db = getMockDb();
-    const user = getAuthenticatedUser(request, db);
+    const user = getAuthenticatedUser(request, db, cookies);
     if (!user) {
       return errorResponse(401, 'UNAUTHORIZED', 'Authentication required.');
     }
@@ -181,11 +201,18 @@ export const handlers = [
   // 3.3 POST /auth/logout
   http.post(`${API_BASE}/auth/logout`, async () => {
     await delay(80);
-    return HttpResponse.json({
-      success: true,
-      message: 'Signed out successfully',
-      data: null,
-    });
+    return HttpResponse.json(
+      {
+        success: true,
+        message: 'Signed out successfully',
+        data: null,
+      },
+      {
+        headers: {
+          'Set-Cookie': 'bookborrow_mock_session=; Path=/api/v1; Max-Age=0; SameSite=Lax',
+        },
+      },
+    );
   }),
 
   // 4.1 GET /books/featured
