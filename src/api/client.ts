@@ -79,14 +79,16 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok || !payload.success) {
-    const errObj = !payload.success
-      ? payload.error
-      : { code: 'HTTP_ERROR', message: response.statusText };
+    const rawError = !payload.success ? payload.error : undefined;
+    const errObj =
+      typeof rawError === 'string'
+        ? { code: 'HTTP_ERROR', message: rawError }
+        : rawError ?? { code: 'HTTP_ERROR', message: response.statusText };
     throw new ApiClientError(
       response.status,
       errObj.code || 'API_ERROR',
       errObj.message || 'An unexpected error occurred.',
-      errObj.details,
+      typeof rawError === 'object' && rawError ? rawError.details : undefined,
     );
   }
 

@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest, ApiClientError } from './client';
 import {
   AdminUser,
   AdminUsersPage,
@@ -53,11 +53,20 @@ export async function getAdminUsersApi(
 }
 
 export async function getAdminUserApi(id: string): Promise<AdminUser> {
-  const res = await apiRequest<AdminUser>(
-    `/admin/users/${encodeURIComponent(id)}`,
-    { method: 'GET' },
+  // Backend only exposes GET /admin/users (list/search), not GET /admin/users/:id.
+  // Query with q=id and match exact accountId or _id so it works with both MSW and the real backend.
+  const page = await getAdminUsersApi({ q: id, limit: 50 });
+  const target = id.trim().toLowerCase();
+  const match = page.items.find(
+    (u) =>
+      u.accountId.toLowerCase() === target ||
+      u._id.toLowerCase() === target ||
+      u.id?.toLowerCase() === target,
   );
-  return normalizeAdminUser(res.data);
+  if (!match) {
+    throw new ApiClientError(404, 'USER_NOT_FOUND', 'User not found.');
+  }
+  return match;
 }
 
 export async function updateAdminUserApi(
