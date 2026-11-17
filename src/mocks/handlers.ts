@@ -548,15 +548,11 @@ export const hybridHandlers = [
   }),
 
   // 6.1 GET /me/borrowing
-  http.get(`${API_BASE}/me/borrowing`, async ({ request }) => {
+  http.get(`${API_BASE}/me/borrowing`, async ({ request, cookies }) => {
     await delay(130);
     const db = getMockDb();
-    const user =
-      getAuthenticatedUser(request, db) ||
-      syncUserCounters(
-        db.users.find((u) => u.accountId === 'S10428')!,
-        db,
-      );
+    const user = getAuthenticatedUser(request, db, cookies);
+    if (!user) return errorResponse(401, 'UNAUTHORIZED', 'Authentication required.');
 
     const today = getDemoToday();
     const studentLoans = db.loans.filter((l) => l.studentId === user._id);
@@ -596,6 +592,8 @@ export const hybridHandlers = [
       } else if (user.overdueLoansCount > 0 || user.unpaidFines > 0) {
         renewalStatusText =
           'Renewal unavailable while account has overdue books or unpaid fines';
+      } else if (otherStudentHoldOnTitle) {
+        renewalStatusText = 'Renewal unavailable · Another reader has reserved this book';
       }
 
       return {
@@ -660,7 +658,7 @@ export const hybridHandlers = [
           ? 'You can borrow'
           : user.overdueLoansCount > 0
             ? 'Overdue book must be returned'
-            : 'Loan limit reached',
+            : user.unpaidFines > 0 ? 'Unpaid fines must be resolved' : 'Loan limit reached',
         activeLoansCount: user.activeLoansCount,
         maxLoansLimit: user.maxLoansLimit,
         remainingLoanSpace: Math.max(0, user.maxLoansLimit - user.activeLoansCount),
@@ -696,15 +694,11 @@ export const hybridHandlers = [
   }),
 
   // 6.2 POST /holds
-  http.post(`${API_BASE}/holds`, async ({ request }) => {
+  http.post(`${API_BASE}/holds`, async ({ request, cookies }) => {
     await delay(160);
     const db = getMockDb();
-    const user =
-      getAuthenticatedUser(request, db) ||
-      syncUserCounters(
-        db.users.find((u) => u.accountId === 'S10428')!,
-        db,
-      );
+    const user = getAuthenticatedUser(request, db, cookies);
+    if (!user) return errorResponse(401, 'UNAUTHORIZED', 'Authentication required.');
 
     let body: { bookId?: string } = {};
     try {
@@ -833,10 +827,12 @@ export const hybridHandlers = [
   }),
 
   // 6.3 DELETE /holds/:id
-  http.delete(`${API_BASE}/holds/:id`, async ({ params }) => {
+  http.delete(`${API_BASE}/holds/:id`, async ({ params, request, cookies }) => {
     await delay(140);
     const idParam = String(params.id || '');
     const db = getMockDb();
+    const user = getAuthenticatedUser(request, db, cookies);
+    if (!user) return errorResponse(401, 'UNAUTHORIZED', 'Authentication required.');
 
     const hold = db.holds.find(
       (h) =>
@@ -844,7 +840,7 @@ export const hybridHandlers = [
         h.holdCode.toLowerCase() === idParam.toLowerCase(),
     );
 
-    if (!hold) {
+    if (!hold || (user.role === 'student' && hold.studentId !== user._id)) {
       return errorResponse(404, 'HOLD_NOT_FOUND', 'Hold request not found.');
     }
 
@@ -877,16 +873,12 @@ export const hybridHandlers = [
   }),
 
   // 6.4 POST /loans/:id/renew
-  http.post(`${API_BASE}/loans/:id/renew`, async ({ params, request }) => {
+  http.post(`${API_BASE}/loans/:id/renew`, async ({ params, request, cookies }) => {
     await delay(140);
     const idParam = String(params.id || '');
     const db = getMockDb();
-    const user =
-      getAuthenticatedUser(request, db) ||
-      syncUserCounters(
-        db.users.find((u) => u.accountId === 'S10428')!,
-        db,
-      );
+    const user = getAuthenticatedUser(request, db, cookies);
+    if (!user) return errorResponse(401, 'UNAUTHORIZED', 'Authentication required.');
 
     const loan = db.loans.find(
       (l) =>
@@ -894,7 +886,7 @@ export const hybridHandlers = [
         l.borrowCode.toLowerCase() === idParam.toLowerCase(),
     );
 
-    if (!loan) {
+    if (!loan || loan.studentId !== user._id) {
       return errorResponse(404, 'LOAN_NOT_FOUND', 'Loan record not found.');
     }
 
