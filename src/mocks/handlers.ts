@@ -892,18 +892,27 @@ export const hybridHandlers = [
 
     const today = getDemoToday();
     const currentDaysLeft = calculateDaysDifference(today, loan.dueDate);
+    const otherStudentHoldOnTitle = db.holds.some(
+      (h) =>
+        h.bookId === loan.bookId &&
+        h.studentId !== user._id &&
+        h.status === 'Ready',
+    );
 
     if (
       loan.status !== 'Active' ||
       loan.renewalCount >= 1 ||
       currentDaysLeft < 0 ||
       user.overdueLoansCount > 0 ||
-      user.unpaidFines > 0
+      user.unpaidFines > 0 ||
+      otherStudentHoldOnTitle
     ) {
       return errorResponse(
         403,
         'RENEWAL_NOT_ELIGIBLE',
-        'This loan cannot be renewed (already renewed once, overdue, or account blocked).',
+        otherStudentHoldOnTitle
+          ? 'This loan cannot be renewed because another reader has reserved this book.'
+          : 'This loan cannot be renewed (already renewed once, overdue, or account blocked).',
       );
     }
 
