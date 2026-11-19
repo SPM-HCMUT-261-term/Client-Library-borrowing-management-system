@@ -155,8 +155,56 @@ try {
   assert.equal(issueRes.body.data.borrowerSummary.loansNow, 4);
   assert.equal(issueRes.body.data.borrowerSummary.remainingLoanSpace, 1);
 
+  // 10. Return book: copy without active loan (WB-00422) returns 404
+  assert.equal(
+    (await request('/staff/loans/active-by-copy/WB-00422')).status,
+    404,
+  );
+
+  // 11. Return book: lookup active loan on WB-00511 -> 200 OK
+  const activeLookup = await request('/staff/loans/active-by-copy/WB-00511');
+  assert.equal(activeLookup.status, 200);
+  assert.equal(activeLookup.body.data.copy.copyCode, 'WB-00511');
+  assert.equal(activeLookup.body.data.borrower.activeLoansBeforeReturn, 4);
+  assert.equal(activeLookup.body.data.borrower.activeLoansAfterReturn, 3);
+  const borrowCodeToReturn = activeLookup.body.data.loan.borrowCode;
+
+  // 12. Confirm return with condition "Good" -> 200 OK, copy becomes Available, loans 4 -> 3
+  const returnRes = await request(
+    `/staff/loans/${borrowCodeToReturn}/return`,
+    'POST',
+    { condition: 'Good', conditionNote: 'No new damage' },
+  );
+  assert.equal(returnRes.status, 200);
+  assert.equal(returnRes.body.data.status, 'Returned');
+  assert.equal(returnRes.body.data.copy.newState, 'Available');
+  assert.equal(returnRes.body.data.borrower.loansBefore, 4);
+  assert.equal(returnRes.body.data.borrower.loansAfter, 3);
+
+  // 13. Returning the same loan again returns 409 LOAN_ALREADY_RETURNED
+  assert.equal(
+    (
+      await request(`/staff/loans/${borrowCodeToReturn}/return`, 'POST', {
+        condition: 'Good',
+      })
+    ).status,
+    409,
+  );
+
+  // 14. Return overdue loan on WB-00318 with condition "Damaged" -> copy becomes Damaged
+  const overdueLookup = await request('/staff/loans/active-by-copy/WB-00318');
+  assert.equal(overdueLookup.status, 200);
+  assert.equal(overdueLookup.body.data.loan.isOverdue, true);
+  const damagedReturn = await request(
+    `/staff/loans/${overdueLookup.body.data.loan.borrowCode}/return`,
+    'POST',
+    { condition: 'Damaged', conditionNote: 'Bent cover corner' },
+  );
+  assert.equal(damagedReturn.status, 200);
+  assert.equal(damagedReturn.body.data.copy.newState, 'Damaged');
+
   console.log(
-    'PASS: staff student lookup, copy checkout-check (available, reserved, borrowed), batch issue, hold fulfillment, and error guards.',
+    'PASS: staff student lookup, copy checkout-check, batch issue, hold fulfillment, active loan lookup by copy, book return (Good & Damaged), and 404/409 guards.',
   );
 } finally {
   server.close();

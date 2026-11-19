@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Info,
   Search,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -38,6 +39,7 @@ function normalizeCode(raw: string): string {
 
 export const StaffIssueBooksPage: React.FC = () => {
   const { showToast } = useToast();
+  const isMockEnabled = import.meta.env.VITE_USE_MOCK !== 'false';
 
   // Step 1: Student lookup state
   const [studentInput, setStudentInput] = useState('');
@@ -552,6 +554,47 @@ export const StaffIssueBooksPage: React.FC = () => {
               </button>
             </form>
 
+            {isMockEnabled && (
+              <div className="mt-3 rounded-lg border border-brand-border bg-brand-canvas/60 px-3.5 py-2.5 flex flex-wrap items-center gap-2 text-[12px]">
+                <span className="inline-flex items-center gap-1.5 font-medium text-brand-ink mr-1">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-teal" />
+                  <span>Demo students:</span>
+                </span>
+                <button
+                  type="button"
+                  disabled={isFindingStudent}
+                  onClick={() => void handleFindStudent(undefined, 'S10428')}
+                  className="px-2.5 py-1 rounded bg-brand-mint text-brand-teal font-semibold hover:bg-brand-teal hover:text-white transition-colors disabled:opacity-50"
+                >
+                  Maya Chen · S10428
+                </button>
+                <button
+                  type="button"
+                  disabled={isFindingStudent}
+                  onClick={() => void handleFindStudent(undefined, 'S10216')}
+                  className="px-2.5 py-1 rounded bg-white border border-brand-border text-brand-ink font-medium hover:border-brand-teal transition-colors disabled:opacity-50"
+                >
+                  Amira Khan · S10216
+                </button>
+                <button
+                  type="button"
+                  disabled={isFindingStudent}
+                  onClick={() => void handleFindStudent(undefined, 'S10312')}
+                  className="px-2.5 py-1 rounded bg-brand-amberSurface text-brand-amberText font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  Oliver Brown · S10312 (Overdue)
+                </button>
+                <button
+                  type="button"
+                  disabled={isFindingStudent}
+                  onClick={() => void handleFindStudent(undefined, 'S10999')}
+                  className="px-2.5 py-1 rounded bg-gray-100 text-brand-slate font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Liam Patel · S10999 (Locked)
+                </button>
+              </div>
+            )}
+
             {studentError && (
               <div
                 role="alert"
@@ -684,6 +727,39 @@ export const StaffIssueBooksPage: React.FC = () => {
                 {isCheckingCopy ? 'Checking…' : 'Find copy'}
               </button>
             </form>
+
+            {isMockEnabled && studentProfile && elig?.isEligible && (
+              <div className="mt-3 rounded-lg border border-brand-border bg-brand-canvas/60 px-3.5 py-2.5 flex flex-wrap items-center gap-2 text-[12px]">
+                <span className="inline-flex items-center gap-1.5 font-medium text-brand-ink mr-1">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-teal" />
+                  <span>Demo copies:</span>
+                </span>
+                <button
+                  type="button"
+                  disabled={isCheckingCopy}
+                  onClick={() => void handleFindCopy(undefined, 'WB-00421')}
+                  className="px-2.5 py-1 rounded bg-brand-mint text-brand-teal font-semibold hover:bg-brand-teal hover:text-white transition-colors disabled:opacity-50"
+                >
+                  WB-00421 (Available)
+                </button>
+                <button
+                  type="button"
+                  disabled={isCheckingCopy}
+                  onClick={() => void handleFindCopy(undefined, 'WB-00511')}
+                  className="px-2.5 py-1 rounded bg-brand-mint text-brand-teal font-semibold hover:bg-brand-teal hover:text-white transition-colors disabled:opacity-50"
+                >
+                  WB-00511 (Available)
+                </button>
+                <button
+                  type="button"
+                  disabled={isCheckingCopy}
+                  onClick={() => void handleFindCopy(undefined, 'WB-00423')}
+                  className="px-2.5 py-1 rounded bg-brand-amberSurface text-brand-amberText font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  WB-00423 (Already borrowed)
+                </button>
+              </div>
+            )}
 
             {copyError && (
               <div

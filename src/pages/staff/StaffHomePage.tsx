@@ -19,6 +19,7 @@ const cards = [
     description:
       'Find a borrowed copy, check its condition and confirm the return.',
     icon: ArrowDownLeft,
+    to: '/staff/return',
     surface: 'bg-[#EDF2FF]',
     accent: 'bg-[#3B6EF5] text-white',
     titleColor: 'text-[#315FF4]',

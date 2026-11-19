@@ -1,5 +1,6 @@
 import { apiRequest } from './client';
 import {
+  ActiveLoanLookup,
   AddCopyRequestBody,
   AddCopyResult,
   AuthSession,
@@ -17,6 +18,8 @@ import {
   LoginRequestBody,
   MyBorrowingDashboard,
   RenewLoanResult,
+  ReturnBookRequestBody,
+  ReturnDetail,
   StudentCheckoutProfile,
   UpdateBookRequestBody,
   UpdateCopyRequestBody,
@@ -224,4 +227,27 @@ export async function issueBooksApi(
     method: 'POST',
     body: JSON.stringify(body),
   });
+}
+
+export async function findActiveLoanByCopyApi(
+  copyCode: string,
+): Promise<ActiveLoanLookup> {
+  const res = await apiRequest<ActiveLoanLookup>(
+    `/staff/loans/active-by-copy/${encodeURIComponent(copyCode.trim())}`,
+    { method: 'GET' },
+  );
+  return res.data;
+}
+
+export async function returnBookApi(
+  loanIdOrBorrowCode: string,
+  body: ReturnBookRequestBody,
+): Promise<{ data: ReturnDetail; message?: string }> {
+  return apiRequest<ReturnDetail>(
+    `/staff/loans/${encodeURIComponent(loanIdOrBorrowCode.trim())}/return`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  );
 }

@@ -571,3 +571,66 @@ export interface IssueTransactionReceipt {
     remainingLoanSpace: number;
   };
 }
+
+// Section 7.4: GET /staff/loans/active-by-copy/:copyCode
+export interface ActiveLoanLookup {
+  loan: {
+    _id: string;
+    borrowCode: string;
+    borrowedAt: string;
+    dueDate: string;
+    returningToday: string;
+    isOverdue: boolean;
+    timingBadge: string;
+  };
+  copy: {
+    _id: string;
+    copyCode: string;
+    currentCondition: CopyCondition;
+    homeLocation: string;
+  };
+  book: {
+    _id: string;
+    title: string;
+    author: string;
+    coverImageUrl: string | null;
+  };
+  borrower: {
+    _id: string;
+    accountId: string;
+    fullName: string;
+    initials: string;
+    yearGroup: string | null;
+    activeLoansBeforeReturn: number;
+    activeLoansAfterReturn: number;
+    maxLoansLimit: number;
+  };
+}
+
+// Section 7.5: POST /staff/loans/:id/return
+export interface ReturnBookRequestBody {
+  condition: CopyCondition;
+  conditionNote?: string | null;
+}
+
+export interface ReturnDetail {
+  _id: string;
+  borrowCode: string;
+  status: 'Returned';
+  borrower: {
+    accountId: string;
+    fullName: string;
+    loansBefore: number;
+    loansAfter: number;
+  };
+  borrowedAt: string;
+  dueDate: string;
+  returnedAt: string;
+  returnCondition: CopyCondition;
+  conditionNote: string | null;
+  copy: {
+    copyCode: string;
+    newState: 'Available' | 'Damaged' | 'Lost';
+    homeLocation: string;
+  };
+}

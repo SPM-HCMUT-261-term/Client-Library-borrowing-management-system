@@ -1,9 +1,13 @@
 import { delay, http, HttpResponse } from 'msw';
 import { AUTH_USER_KEY } from '../api/client';
 import {
+  ActiveLoanLookup,
   CopyCheckoutCheck,
+  CopyCondition,
   IssueBooksRequestBody,
   IssueTransactionReceipt,
+  ReturnBookRequestBody,
+  ReturnDetail,
   StudentCheckoutProfile,
 } from '../types/api';
 import {
@@ -531,4 +535,229 @@ export const staffCirculationHandlers = [
       { status: 201 },
     );
   }),
+
+  // 7.4 GET /staff/loans/active-by-copy/:copyCode
+  http.get(
+    `${API_BASE}/staff/loans/active-by-copy/:copyCode`,
+    async ({ params, cookies }) => {
+      await delay(140);
+      if (!isStaffAllowed(cookies)) {
+        return errorResponse(403, 'FORBIDDEN_ACCESS', 'Staff access required.');
+      }
+
+      const rawCopyCode = String(params.copyCode || '').trim();
+      const normCode = normalizeCode(rawCopyCode);
+      const db = getMockDb();
+
+      const copy = db.copies.find((c) => normalizeCode(c.copyCode) === normCode);
+      if (!copy) {
+        return errorResponse(
+          404,
+          'ACTIVE_LOAN_NOT_FOUND',
+          `No physical copy or active loan matches "${rawCopyCode}". Only an active loan can be checked in.`,
+        );
+      }
+
+      const activeLoan = db.loans.find(
+        (l) => l.copyId === copy._id && l.status === 'Active',
+      );
+      if (!activeLoan) {
+        return errorResponse(
+          404,
+          'ACTIVE_LOAN_NOT_FOUND',
+          `Copy ${copy.copyCode} does not currently have an active loan. A copy already returned will not be returned again.`,
+        );
+      }
+
+      const book = db.books.find((b) => b._id === copy.bookId);
+      if (!book) {
+        return errorResponse(404, 'BOOK_NOT_FOUND', 'Book title not found.');
+      }
+
+      const foundBorrower = db.users.find(
+        (u) => u._id === activeLoan.studentId,
+      );
+      const borrower = foundBorrower
+        ? syncStudent(foundBorrower, db)
+        : {
+            _id: activeLoan.studentId,
+            accountId: activeLoan.studentAccountId,
+            fullName: activeLoan.studentName,
+            initials: activeLoan.studentName
+              .split(' ')
+              .map((p) => p[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase(),
+            yearGroup: null,
+            activeLoansCount: 1,
+            maxLoansLimit: 5,
+          };
+
+      const today = getDemoToday();
+      const daysDiff = calculateDaysDifference(today, activeLoan.dueDate);
+      const isOverdue = daysDiff < 0;
+      const overdueDays = Math.abs(daysDiff);
+      const timingBadge = isOverdue
+        ? `Overdue · ${overdueDays} ${overdueDays === 1 ? 'day' : 'days'}`
+        : daysDiff === 0
+          ? 'Due today'
+          : daysDiff === 1
+            ? 'Due tomorrow'
+            : 'On time';
+
+      const activeLoansBeforeReturn = borrower.activeLoansCount;
+      const activeLoansAfterReturn = Math.max(0, activeLoansBeforeReturn - 1);
+
+      const payload: ActiveLoanLookup = {
+        loan: {
+          _id: activeLoan._id,
+          borrowCode: activeLoan.borrowCode,
+          borrowedAt: activeLoan.borrowedAt,
+          dueDate: activeLoan.dueDate,
+          returningToday: today,
+          isOverdue,
+          timingBadge,
+        },
+        copy: {
+          _id: copy._id,
+          copyCode: copy.copyCode,
+          currentCondition: copy.condition,
+          homeLocation: copy.homeLocation,
+        },
+        book: {
+          _id: book._id,
+          title: book.title,
+          author: book.author,
+          coverImageUrl: book.coverImageUrl,
+        },
+        borrower: {
+          _id: borrower._id,
+          accountId: borrower.accountId,
+          fullName: borrower.fullName,
+          initials: borrower.initials,
+          yearGroup: borrower.yearGroup,
+          activeLoansBeforeReturn,
+          activeLoansAfterReturn,
+          maxLoansLimit: borrower.maxLoansLimit,
+        },
+      };
+
+      return HttpResponse.json({
+        success: true,
+        data: payload,
+      });
+    },
+  ),
+
+  // 7.5 POST /staff/loans/:id/return
+  http.post(
+    `${API_BASE}/staff/loans/:id/return`,
+    async ({ params, request, cookies }) => {
+      await delay(150);
+      if (!isStaffAllowed(cookies)) {
+        return errorResponse(403, 'FORBIDDEN_ACCESS', 'Staff access required.');
+      }
+
+      const idParam = String(params.id || '').trim();
+      const normId = normalizeCode(idParam);
+      const body = (await request
+        .json()
+        .catch(() => ({}))) as Partial<ReturnBookRequestBody>;
+      const condition = body.condition as CopyCondition;
+
+      if (!['Good', 'Damaged', 'Lost'].includes(condition)) {
+        return errorResponse(
+          400,
+          'VALIDATION_ERROR',
+          'Return condition must be one of "Good", "Damaged", or "Lost".',
+        );
+      }
+
+      const db = getMockDb();
+      const loan = db.loans.find(
+        (l) => l._id === idParam || normalizeCode(l.borrowCode) === normId,
+      );
+      if (!loan) {
+        return errorResponse(404, 'LOAN_NOT_FOUND', 'Loan record not found.');
+      }
+
+      if (loan.status === 'Returned') {
+        return errorResponse(
+          409,
+          'LOAN_ALREADY_RETURNED',
+          'Only an active loan can be checked in. A copy already returned will not be returned again.',
+        );
+      }
+
+      const copy = db.copies.find((c) => c._id === loan.copyId);
+      if (!copy) {
+        return errorResponse(
+          404,
+          'COPY_NOT_FOUND',
+          'Associated physical copy not found.',
+        );
+      }
+
+      const student = db.users.find((u) => u._id === loan.studentId);
+      if (student) {
+        syncStudent(student, db);
+      }
+      const loansBefore = student ? student.activeLoansCount : 1;
+
+      const returnedAt = new Date().toISOString();
+      const newState: ReturnDetail['copy']['newState'] =
+        condition === 'Good' ? 'Available' : condition;
+
+      loan.status = 'Returned';
+      loan.returnedAt = returnedAt;
+      loan.returnCondition = condition;
+      loan.conditionNote = body.conditionNote?.trim() || null;
+
+      copy.condition = condition;
+      copy.state = newState;
+      copy.hasLoanHistory = true;
+      copy.updatedAt = returnedAt;
+      if (loan.conditionNote) {
+        copy.notes = loan.conditionNote;
+      }
+
+      if (student) {
+        syncStudent(student, db);
+      }
+      const loansAfter = student
+        ? student.activeLoansCount
+        : Math.max(0, loansBefore - 1);
+
+      saveMockDb(db);
+
+      const detail: ReturnDetail = {
+        _id: loan._id,
+        borrowCode: loan.borrowCode,
+        status: 'Returned',
+        borrower: {
+          accountId: loan.studentAccountId,
+          fullName: loan.studentName,
+          loansBefore,
+          loansAfter,
+        },
+        borrowedAt: loan.borrowedAt,
+        dueDate: loan.dueDate,
+        returnedAt,
+        returnCondition: condition,
+        conditionNote: loan.conditionNote,
+        copy: {
+          copyCode: copy.copyCode,
+          newState,
+          homeLocation: copy.homeLocation,
+        },
+      };
+
+      return HttpResponse.json({
+        success: true,
+        message: 'Book return confirmed and saved in returned history.',
+        data: detail,
+      });
+    },
+  ),
 ];
