@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowDownLeft, ArrowUpRight, BookCopy, Clock3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatBorrowingToday } from '../../utils/borrowingDates';
 
 const cards = [
   {
@@ -8,6 +9,7 @@ const cards = [
     description:
       'Find a student and check out several physical copies together.',
     icon: ArrowUpRight,
+    to: '/staff/issue',
     surface: 'bg-[#FFF4E6]',
     accent: 'bg-[#E97700] text-white',
     titleColor: 'text-[#D96C00]',
@@ -46,7 +48,7 @@ export const StaffHomePage: React.FC = () => (
   <div className="pt-8">
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
       <span>Home</span>
-      <span>Thursday, 15 October 2026</span>
+      <span>{formatBorrowingToday()}</span>
     </div>
     <h1 className="mt-2 font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
       Staff home

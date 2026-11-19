@@ -53,13 +53,16 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                   </>
                 )}
               </NavLink>
-              <span
-                className="h-full flex items-center text-[14px] text-brand-slate/70 cursor-not-allowed"
-                aria-disabled="true"
-                title="Borrowing & returns will be enabled in the next milestone"
-              >
-                Borrowing &amp; returns
-              </span>
+              <NavLink to="/staff/issue" className={navClass}>
+                {({ isActive }) => (
+                  <>
+                    <span>Borrowing &amp; returns</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-teal" />
+                    )}
+                  </>
+                )}
+              </NavLink>
               <NavLink to="/staff/books" className={navClass}>
                 {({ isActive }) => (
                   <>

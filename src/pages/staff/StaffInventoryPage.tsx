@@ -6,6 +6,7 @@ import { ApiClientError } from '../../api/client';
 import { BookCoverGraphic } from '../../components/BookCoverGraphic';
 import { AddBookModal } from '../../components/staff/AddBookModal';
 import { useToast } from '../../context/ToastContext';
+import { formatBorrowingToday } from '../../utils/borrowingDates';
 import {
   BookCategory,
   CatalogBookItem,
@@ -112,7 +113,7 @@ export const StaffInventoryPage: React.FC = () => {
     <div className="pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
         <span>Books &amp; copies / Title inventory</span>
-        <span>Thursday, 15 October 2026</span>
+        <span>{formatBorrowingToday()}</span>
       </div>
 
       <div className="mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">

@@ -28,6 +28,7 @@ import { StaffLayout } from './components/staff/StaffLayout';
 import { StaffHomePage } from './pages/staff/StaffHomePage';
 import { StaffInventoryPage } from './pages/staff/StaffInventoryPage';
 import { StaffBookDetailPage } from './pages/staff/StaffBookDetailPage';
+import { StaffIssueBooksPage } from './pages/staff/StaffIssueBooksPage';
 
 const AppRoutes: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
@@ -79,6 +80,7 @@ const AppRoutes: React.FC = () => {
         <MockDevToolbar />
         <Routes>
           <Route path="/staff" element={<StaffHomePage />} />
+          <Route path="/staff/issue" element={<StaffIssueBooksPage />} />
           <Route path="/staff/books" element={<StaffInventoryPage />} />
           <Route path="/staff/books/:id" element={<StaffBookDetailPage />} />
           <Route path="/staff/*" element={<Navigate to="/staff" replace />} />

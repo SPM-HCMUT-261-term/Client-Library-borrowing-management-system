@@ -1,5 +1,6 @@
 import { adminHandlers } from './adminHandlers';
 import { inventoryHandlers } from './inventoryHandlers';
+import { staffCirculationHandlers } from './staffCirculationHandlers';
 import { AUTH_USER_KEY } from '../api/client';
 import { http, HttpResponse, delay } from 'msw';
 import {
@@ -221,6 +222,7 @@ const authHandlers = [
 
 export const hybridHandlers = [
   ...inventoryHandlers,
+  ...staffCirculationHandlers,
   // 4.1 GET /books/featured
   http.get(`${API_BASE}/books/featured`, async ({ request }) => {
     await delay(120);

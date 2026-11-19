@@ -11,6 +11,7 @@ import { BookCoverGraphic } from '../../components/BookCoverGraphic';
 import { AddCopyModal } from '../../components/staff/AddCopyModal';
 import { EditCopyModal } from '../../components/staff/EditCopyModal';
 import { useToast } from '../../context/ToastContext';
+import { formatBorrowingToday } from '../../utils/borrowingDates';
 import {
   BookCategory,
   BookDetail,
@@ -189,7 +190,7 @@ export const StaffBookDetailPage: React.FC = () => {
     <div className="pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
         <span>Books &amp; copies / {book.title}</span>
-        <span>Thursday, 15 October 2026</span>
+        <span>{formatBorrowingToday()}</span>
       </div>
 
       <div className="mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">

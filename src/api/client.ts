@@ -62,7 +62,10 @@ export async function apiRequest<T>(
         : rawError ?? { code: 'HTTP_ERROR', message: response.statusText };
     const code = errObj.code || 'API_ERROR';
     const isBusinessRule403 =
-      code === 'BORROWING_BLOCKED' || code === 'RENEWAL_NOT_ELIGIBLE';
+      code === 'BORROWING_BLOCKED' ||
+      code === 'RENEWAL_NOT_ELIGIBLE' ||
+      code === 'BORROWER_INELIGIBLE' ||
+      code === 'LOAN_LIMIT_EXCEEDED';
     const shouldRedirectToLogin =
       !endpoint.includes('/auth/login') &&
       ((response.status === 403 && !isBusinessRule403) ||

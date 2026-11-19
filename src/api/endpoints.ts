@@ -7,13 +7,17 @@ import {
   BookDetail,
   CancelHoldResult,
   CatalogResult,
+  CopyCheckoutCheck,
   CreateBookRequestBody,
   FeaturedBookItem,
   GetBooksParams,
   HoldConfirmation,
+  IssueBooksRequestBody,
+  IssueTransactionReceipt,
   LoginRequestBody,
   MyBorrowingDashboard,
   RenewLoanResult,
+  StudentCheckoutProfile,
   UpdateBookRequestBody,
   UpdateCopyRequestBody,
   UpdateCopyResult,
@@ -186,4 +190,38 @@ export async function renewLoanApi(
     `/loans/${encodeURIComponent(loanIdOrCode)}/renew`,
     { method: 'POST' },
   );
+}
+
+// Route Group 5: Staff Counter & Loan Management (/staff)
+export async function findStudentForCheckoutApi(
+  accountId: string,
+): Promise<StudentCheckoutProfile> {
+  const res = await apiRequest<StudentCheckoutProfile>(
+    `/staff/students/${encodeURIComponent(accountId.trim())}`,
+    { method: 'GET' },
+  );
+  return res.data;
+}
+
+export async function checkCopyForCheckoutApi(
+  copyCode: string,
+  studentAccountId: string,
+): Promise<CopyCheckoutCheck> {
+  const query = new URLSearchParams({
+    studentAccountId: studentAccountId.trim(),
+  }).toString();
+  const res = await apiRequest<CopyCheckoutCheck>(
+    `/staff/copies/${encodeURIComponent(copyCode.trim())}/checkout-check?${query}`,
+    { method: 'GET' },
+  );
+  return res.data;
+}
+
+export async function issueBooksApi(
+  body: IssueBooksRequestBody,
+): Promise<{ data: IssueTransactionReceipt; message?: string }> {
+  return apiRequest<IssueTransactionReceipt>('/staff/loans/issue', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }

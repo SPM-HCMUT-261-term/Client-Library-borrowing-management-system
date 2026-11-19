@@ -471,3 +471,103 @@ export interface RenewLoanResult {
   renewalCount: number;
   canRenew: boolean;
 }
+
+// Section 7.1: GET /staff/students/:accountId
+export interface StudentCheckoutProfile {
+  student: {
+    _id: string;
+    accountId: string;
+    fullName: string;
+    initials: string;
+    yearGroup: string | null;
+  };
+  eligibility: {
+    isEligible: boolean;
+    activeLoansCount: number;
+    maxLoansLimit: number;
+    remainingLoanSpace: number;
+    overdueBooksCount: number;
+    unpaidFines: number;
+    statusBanner: string;
+  };
+  activeHolds: Array<{
+    holdCode: string;
+    copyCode: string;
+    bookTitle: string;
+    collectBy: string;
+  }>;
+}
+
+// Section 7.2: GET /staff/copies/:copyCode/checkout-check
+export interface CopyCheckoutCheck {
+  copy: {
+    _id: string;
+    copyCode: string;
+    state: CopyState;
+    condition: CopyCondition;
+    homeLocation: string;
+  };
+  book: {
+    _id: string;
+    title: string;
+    author: string;
+    coverImageUrl: string | null;
+  };
+  canAdd: boolean;
+  availabilityBadge: string;
+  defaultDueDate: string;
+  associatedHold: {
+    _id: string;
+    holdCode: string;
+    collectBy: string;
+  } | null;
+  blockingInfo: {
+    reasonCode: 'ALREADY_BORROWED' | 'RESERVED_FOR_OTHER' | 'COPY_UNAVAILABLE';
+    message: string;
+    currentBorrowerName: string | null;
+    currentBorrowerAccountId: string | null;
+    currentDueDate: string | null;
+  } | null;
+}
+
+// Section 7.3: POST /staff/loans/issue
+export interface IssueBooksRequestBody {
+  studentAccountId: string;
+  items: Array<{
+    copyCode: string;
+    dueDate: string;
+  }>;
+}
+
+export interface IssueTransactionReceipt {
+  issuedAt: string;
+  borrowEntries: Array<{
+    _id: string;
+    borrowCode: string;
+    copyCode: string;
+    book: {
+      _id: string;
+      title: string;
+      author: string;
+      coverImageUrl: string | null;
+    };
+    borrowedAt: string;
+    dueDate: string;
+  }>;
+  fulfilledHolds: Array<{
+    holdCode: string;
+    copyCode: string;
+    message: string;
+  }>;
+  borrowerSummary: {
+    studentId: string;
+    accountId: string;
+    fullName: string;
+    initials?: string;
+    yearGroup: string | null;
+    loansBefore: number;
+    loansNow: number;
+    maxLoansLimit: number;
+    remainingLoanSpace: number;
+  };
+}
