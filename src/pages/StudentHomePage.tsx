@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { getFeaturedBooksApi } from '../api/endpoints';
 import { FeaturedBookItem } from '../types/api';
 import { BookCoverGraphic } from '../components/BookCoverGraphic';
+import { formatBorrowingToday } from '../utils/borrowingDates';
 
 function getFeaturedSubtitle(book: FeaturedBookItem): string {
   if (book.title.toLowerCase().includes('mango street')) {
@@ -73,7 +74,7 @@ export const StudentHomePage: React.FC = () => {
         <span className="font-medium text-brand-ink/80">
           Good morning, {firstName}.
         </span>
-        <span className="text-[12px]">Thursday, 15 October 2026</span>
+        <span className="text-[12px]">{formatBorrowingToday()}</span>
       </div>
 
       {/* Hero Search Card */}
@@ -253,6 +254,7 @@ export const StudentHomePage: React.FC = () => {
                     <BookCoverGraphic
                       title={book.title}
                       author={book.author}
+                      coverKey={book._id}
                       size="md"
                     />
                   </div>

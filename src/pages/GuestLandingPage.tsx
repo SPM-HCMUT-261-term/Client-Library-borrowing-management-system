@@ -208,6 +208,7 @@ export const GuestLandingPage: React.FC = () => {
                     <BookCoverGraphic
                       title={book.title}
                       author={book.author}
+                      coverKey={book._id}
                       size="md"
                     />
                   </div>

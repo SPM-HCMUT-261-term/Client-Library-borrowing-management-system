@@ -55,7 +55,19 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok || !payload.success) {
-    if (response.status === 403 && !endpoint.includes('/auth/login')) {
+    const rawError = !payload.success ? payload.error : undefined;
+    const errObj =
+      typeof rawError === 'string'
+        ? { code: 'HTTP_ERROR', message: rawError }
+        : rawError ?? { code: 'HTTP_ERROR', message: response.statusText };
+    const code = errObj.code || 'API_ERROR';
+    const isBusinessRule403 =
+      code === 'BORROWING_BLOCKED' || code === 'RENEWAL_NOT_ELIGIBLE';
+    const shouldRedirectToLogin =
+      !endpoint.includes('/auth/login') &&
+      ((response.status === 403 && !isBusinessRule403) ||
+        (response.status === 401 && !endpoint.includes('/auth/me')));
+    if (shouldRedirectToLogin) {
       try {
         localStorage.removeItem(AUTH_USER_KEY);
       } catch {
@@ -65,14 +77,9 @@ export async function apiRequest<T>(
         window.dispatchEvent(new CustomEvent(AUTH_FORBIDDEN_EVENT));
       }
     }
-    const rawError = !payload.success ? payload.error : undefined;
-    const errObj =
-      typeof rawError === 'string'
-        ? { code: 'HTTP_ERROR', message: rawError }
-        : rawError ?? { code: 'HTTP_ERROR', message: response.statusText };
     throw new ApiClientError(
       response.status,
-      errObj.code || 'API_ERROR',
+      code,
       errObj.message || 'An unexpected error occurred.',
       typeof rawError === 'object' && rawError ? rawError.details : undefined,
     );

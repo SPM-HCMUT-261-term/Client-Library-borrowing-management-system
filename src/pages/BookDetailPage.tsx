@@ -15,11 +15,13 @@ import { BookDetail } from '../types/api';
 import { BookCoverGraphic } from '../components/BookCoverGraphic';
 import { ApiClientError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export const BookDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
+  const { showToast } = useToast();
 
   const [book, setBook] = useState<BookDetail | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -59,15 +61,20 @@ export const BookDetailPage: React.FC = () => {
     try {
       const confirmation = await createHoldApi(book._id);
       await refreshUser();
+      showToast(
+        `Hold ${confirmation.holdCode} placed for "${book.title}".`,
+        'success',
+      );
       navigate(`/holds/${confirmation.holdCode}/confirmed`, {
         state: { confirmation },
       });
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        setHoldError(err.message);
-      } else {
-        setHoldError('Could not place a hold right now. Please try again.');
-      }
+      const msg =
+        err instanceof ApiClientError
+          ? err.message
+          : 'Could not place a hold right now. Please try again.';
+      setHoldError(msg);
+      showToast(msg, 'error');
       void loadBook();
     } finally {
       setIsSubmittingHold(false);
@@ -166,6 +173,7 @@ export const BookDetailPage: React.FC = () => {
                 <BookCoverGraphic
                   title={book.title}
                   author={book.author}
+                  coverKey={book.isbn}
                   size="lg"
                 />
               </div>

@@ -19,6 +19,7 @@ import { MyBorrowingDashboard } from '../types/api';
 import { BookCoverGraphic } from '../components/BookCoverGraphic';
 import { ApiClientError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { formatCollectionDeadline, formatBorrowingToday } from '../utils/borrowingDates';
 
 const MONTHS_SHORT = [
@@ -48,16 +49,17 @@ function formatShortDate(isoDate: string | null): string {
   return `${day} ${monthName} ${year}`;
 }
 
-function BorrowingCover({ book, size }: { book: { title: string; author: string; coverImageUrl: string | null }; size: 'xs' | 'sm' }) {
+function BorrowingCover({ book, size }: { book: { _id: string; title: string; author: string; coverImageUrl: string | null }; size: 'xs' | 'sm' }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const dimensions = size === 'xs' ? 'w-[46px] h-[68px]' : 'w-[72px] h-[105px]';
   return book.coverImageUrl && failedUrl !== book.coverImageUrl
     ? <img src={book.coverImageUrl} alt={`Cover of ${book.title}`} onError={() => setFailedUrl(book.coverImageUrl)} className={`${dimensions} rounded-sm object-cover shadow-sm`} />
-    : <BookCoverGraphic title={book.title} author={book.author} size={size} className={size === 'sm' ? '!w-[72px] !h-[105px]' : '!h-[68px]'} />;
+    : <BookCoverGraphic title={book.title} author={book.author} coverKey={book._id} size={size} className={size === 'sm' ? '!w-[72px] !h-[105px]' : '!h-[68px]'} />;
 }
 
 export const MyBorrowingPage: React.FC = () => {
   const { refreshUser } = useAuth();
+  const { showToast } = useToast();
   const [loadError, setLoadError] = useState<string | null>(null);
   const requestVersion = useRef(0);
   const mutationPending = useRef(false);
@@ -103,21 +105,21 @@ export const MyBorrowingPage: React.FC = () => {
       const res = await renewLoanApi(loanIdOrCode);
       await loadDashboard();
       await refreshUser();
+      const successText =
+        res.message ||
+        `Loan ${res.data.borrowCode} renewed for 7 extra days (new due date: ${formatShortDate(res.data.newDueDate)}).`;
       setBannerMessage({
         type: 'success',
-        text:
-          res.message ||
-          `Loan ${res.data.borrowCode} renewed for 7 extra days (new due date: ${formatShortDate(res.data.newDueDate)}).`,
+        text: successText,
       });
+      showToast(successText, 'success');
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        setBannerMessage({ type: 'error', text: err.message });
-      } else {
-        setBannerMessage({
-          type: 'error',
-          text: 'Could not renew this loan right now.',
-        });
-      }
+      const errorText =
+        err instanceof ApiClientError
+          ? err.message
+          : 'Could not renew this loan right now.';
+      setBannerMessage({ type: 'error', text: errorText });
+      showToast(errorText, 'error');
     } finally {
       mutationPending.current = false;
       setRenewingId(null);
@@ -133,21 +135,21 @@ export const MyBorrowingPage: React.FC = () => {
       const res = await cancelHoldApi(holdCode);
       await loadDashboard();
       await refreshUser();
+      const successText =
+        res.message ||
+        `Hold ${holdCode} has been cancelled and the copy is now available.`;
       setBannerMessage({
         type: 'success',
-        text:
-          res.message ||
-          `Hold ${holdCode} has been cancelled and the copy is now available.`,
+        text: successText,
       });
+      showToast(successText, 'success');
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        setBannerMessage({ type: 'error', text: err.message });
-      } else {
-        setBannerMessage({
-          type: 'error',
-          text: 'Could not cancel this hold right now.',
-        });
-      }
+      const errorText =
+        err instanceof ApiClientError
+          ? err.message
+          : 'Could not cancel this hold right now.';
+      setBannerMessage({ type: 'error', text: errorText });
+      showToast(errorText, 'error');
     } finally {
       mutationPending.current = false;
       setCancellingHoldId(null);

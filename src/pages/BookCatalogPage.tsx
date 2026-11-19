@@ -9,6 +9,7 @@ import {
   BookmarkCheck,
 } from 'lucide-react';
 import { getBooksApi } from '../api/endpoints';
+import { ApiClientError } from '../api/client';
 import {
   BookCategory,
   BookLanguage,
@@ -67,6 +68,7 @@ export const BookCatalogPage: React.FC = () => {
     limit: 6,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Accordion collapse states
   const [openSections, setOpenSections] = useState({
@@ -82,6 +84,7 @@ export const BookCatalogPage: React.FC = () => {
 
   const fetchCatalog = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const result = await getBooksApi({
         q: qParam || undefined,
@@ -96,7 +99,11 @@ export const BookCatalogPage: React.FC = () => {
       setBooks(result.items);
       setPagination(result.pagination);
     } catch (err) {
-      console.error('Failed to load catalog books:', err);
+      setLoadError(
+        err instanceof ApiClientError
+          ? err.message
+          : 'Unable to load the book catalog right now.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -537,6 +544,25 @@ export const BookCatalogPage: React.FC = () => {
                 />
               ))}
             </div>
+          ) : loadError ? (
+            <div
+              role="alert"
+              className="rounded-[12px] border border-red-200 bg-red-50 p-10 text-center space-y-3"
+            >
+              <p className="font-serif text-[22px] text-red-900">
+                Could not load the catalog
+              </p>
+              <p className="text-[13px] text-red-800 max-w-md mx-auto">
+                {loadError}
+              </p>
+              <button
+                type="button"
+                onClick={() => void fetchCatalog()}
+                className="mt-2 inline-flex items-center px-4 py-2 rounded-[8px] bg-brand-teal text-white text-[13px] font-semibold hover:bg-brand-tealHover"
+              >
+                Try again
+              </button>
+            </div>
           ) : books.length === 0 ? (
             <div className="rounded-[12px] border border-brand-border bg-white p-12 text-center space-y-3">
               <p className="font-serif text-[22px] text-brand-ink">
@@ -571,6 +597,7 @@ export const BookCatalogPage: React.FC = () => {
                         <BookCoverGraphic
                           title={book.title}
                           author={book.author}
+                          coverKey={book.isbn}
                           size="md"
                         />
                       </div>

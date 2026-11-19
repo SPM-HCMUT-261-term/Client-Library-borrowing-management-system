@@ -111,10 +111,24 @@ const AppRoutes: React.FC = () => {
           element={user ? <StudentHomePage /> : <GuestLandingPage />}
         />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/books" element={<BookCatalogPage />} />
-        <Route path="/books/:id" element={<BookDetailPage />} />
-        <Route path="/holds/:id/confirmed" element={<HoldConfirmedPage />} />
-        <Route path="/my-borrowing" element={<MyBorrowingPage />} />
+        <Route
+          path="/books"
+          element={user ? <BookCatalogPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/books/:id"
+          element={user ? <BookDetailPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/holds/:id/confirmed"
+          element={
+            user ? <HoldConfirmedPage /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/my-borrowing"
+          element={user ? <MyBorrowingPage /> : <Navigate to="/login" replace />}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

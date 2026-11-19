@@ -18,7 +18,12 @@ import {
 } from '../api/endpoints';
 import { BookCoverGraphic } from '../components/BookCoverGraphic';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { ApiClientError } from '../api/client';
+import {
+  formatCollectionDeadline,
+  formatShortBorrowingDate,
+} from '../utils/borrowingDates';
 
 interface LocationState {
   confirmation?: HoldConfirmation;
@@ -29,6 +34,7 @@ export const HoldConfirmedPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
+  const { showToast } = useToast();
 
   const initialConfirmation =
     (location.state as LocationState | null)?.confirmation || null;
@@ -40,7 +46,7 @@ export const HoldConfirmedPage: React.FC = () => {
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Maya';
+  const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Reader';
 
   // If user reloads /holds/:id/confirmed directly, reconstruct from GET /me/borrowing + GET /books/:id
   useEffect(() => {
@@ -118,15 +124,20 @@ export const HoldConfirmedPage: React.FC = () => {
     setIsCancelling(true);
     setErrorMessage(null);
     try {
-      await cancelHoldApi(confirmation.holdCode);
+      const res = await cancelHoldApi(confirmation.holdCode);
       await refreshUser();
+      showToast(
+        res.message || `Hold ${confirmation.holdCode} has been cancelled.`,
+        'success',
+      );
       navigate(`/books/${confirmation.book._id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage('Could not cancel this hold right now.');
-      }
+      const msg =
+        err instanceof ApiClientError
+          ? err.message
+          : 'Could not cancel this hold right now.';
+      setErrorMessage(msg);
+      showToast(msg, 'error');
       setIsCancelling(false);
     }
   };
@@ -213,7 +224,8 @@ export const HoldConfirmedPage: React.FC = () => {
             <span>Ready for collection</span>
           </span>
           <span className="text-brand-teal font-medium">
-            Hold {confirmation.holdCode} · Requested 15 Oct 2026
+            Hold {confirmation.holdCode} · Requested{' '}
+            {formatShortBorrowingDate(confirmation.requestedAt)}
           </span>
         </div>
 
@@ -224,6 +236,7 @@ export const HoldConfirmedPage: React.FC = () => {
               <BookCoverGraphic
                 title={book.title}
                 author={book.author}
+                coverKey={book._id}
                 size="md"
               />
             </Link>
@@ -250,20 +263,28 @@ export const HoldConfirmedPage: React.FC = () => {
           </div>
 
           {/* Warm Amber COLLECT BY Box */}
-          <div className="rounded-[10px] bg-brand-amberSurface p-5 space-y-2">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.05em] uppercase text-brand-amberText">
-              <Clock className="w-3.5 h-3.5" />
-              <span>COLLECT BY</span>
-            </div>
-            <p className="font-serif text-[23px] leading-tight text-brand-ink">
-              Fri, 16 October
-            </p>
-            <p className="text-[14px] font-semibold text-brand-ink">3:30 pm</p>
-            <p className="text-[11.5px] leading-[1.5] text-brand-amberText pt-1">
-              Illustrative pickup deadline for this demo. Uncollected holds are
-              released.
-            </p>
-          </div>
+          {(() => {
+            const deadline = formatCollectionDeadline(confirmation.collectBy);
+            return (
+              <div className="rounded-[10px] bg-brand-amberSurface p-5 space-y-2">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.05em] uppercase text-brand-amberText">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>COLLECT BY</span>
+                </div>
+                <p className="font-serif text-[23px] leading-tight text-brand-ink">
+                  {deadline.date}
+                </p>
+                {deadline.time && (
+                  <p className="text-[14px] font-semibold text-brand-ink">
+                    {deadline.time}
+                  </p>
+                )}
+                <p className="text-[11.5px] leading-[1.5] text-brand-amberText pt-1">
+                  Uncollected holds are released after the pickup deadline.
+                </p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Card Footer Notice */}
