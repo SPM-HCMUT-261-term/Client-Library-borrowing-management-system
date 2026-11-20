@@ -634,3 +634,84 @@ export interface ReturnDetail {
     homeLocation: string;
   };
 }
+
+// Section 7.6: GET /staff/loans
+export interface GetStaffLoansParams {
+  tab?: 'active' | 'returned';
+  q?: string;
+  status?: 'all' | 'overdue' | 'due_soon' | 'on_loan';
+  sortBy?: 'dueDate' | 'borrowedAt' | 'returnedAt';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface StaffLoanRecordItem {
+  _id: string;
+  borrowCode: string;
+  status: LoanStatus;
+  book: {
+    _id: string;
+    title: string;
+    author: string;
+    coverImageUrl: string | null;
+  };
+  copy: {
+    _id: string;
+    copyCode: string;
+  };
+  borrower: {
+    _id: string;
+    fullName: string;
+    accountId: string;
+  };
+  borrowedAt: string;
+  dueDate: string;
+  returnedAt: string | null;
+  returnCondition: CopyCondition | null;
+  isOverdue: boolean;
+  statusBadge: string;
+}
+
+export interface StaffLoanRecordsPage {
+  items: StaffLoanRecordItem[];
+  pagination: PaginationInfo;
+}
+
+// Section 7.7: GET /staff/holds
+export interface GetStaffHoldsParams {
+  q?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface StaffActiveHoldItem {
+  _id: string;
+  holdCode: string;
+  status: 'Ready';
+  requestedAt: string;
+  collectBy: string;
+  isPastDeadline: boolean;
+  student: {
+    _id: string;
+    accountId: string;
+    fullName: string;
+    yearGroup: string | null;
+  };
+  book: {
+    _id: string;
+    title: string;
+    author: string;
+    coverImageUrl: string | null;
+  };
+  copy: {
+    _id: string;
+    copyCode: string;
+    homeLocation: string;
+  };
+}
+
+export interface StaffActiveHoldsPage {
+  items: StaffActiveHoldItem[];
+  pagination: PaginationInfo;
+}

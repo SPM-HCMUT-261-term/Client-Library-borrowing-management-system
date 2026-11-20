@@ -30,6 +30,7 @@ import { StaffInventoryPage } from './pages/staff/StaffInventoryPage';
 import { StaffBookDetailPage } from './pages/staff/StaffBookDetailPage';
 import { StaffIssueBooksPage } from './pages/staff/StaffIssueBooksPage';
 import { StaffReturnBookPage } from './pages/staff/StaffReturnBookPage';
+import { StaffLoansPage } from './pages/staff/StaffLoansPage';
 
 const AppRoutes: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
@@ -83,6 +84,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/staff" element={<StaffHomePage />} />
           <Route path="/staff/issue" element={<StaffIssueBooksPage />} />
           <Route path="/staff/return" element={<StaffReturnBookPage />} />
+          <Route path="/staff/loans" element={<StaffLoansPage />} />
           <Route path="/staff/books" element={<StaffInventoryPage />} />
           <Route path="/staff/books/:id" element={<StaffBookDetailPage />} />
           <Route path="/staff/*" element={<Navigate to="/staff" replace />} />

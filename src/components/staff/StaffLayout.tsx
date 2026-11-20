@@ -63,6 +63,16 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                   </>
                 )}
               </NavLink>
+              <NavLink to="/staff/loans" className={navClass}>
+                {({ isActive }) => (
+                  <>
+                    <span>Loan records</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-teal" />
+                    )}
+                  </>
+                )}
+              </NavLink>
               <NavLink to="/staff/books" className={navClass}>
                 {({ isActive }) => (
                   <>

@@ -14,9 +14,13 @@ export const MockDevToolbar: React.FC = () => {
 
   const handleReset = async () => {
     resetMockDb();
-    await refreshUser();
     setJustReset(true);
     window.dispatchEvent(new CustomEvent('mock-db-reset'));
+    try {
+      await refreshUser();
+    } finally {
+      window.dispatchEvent(new CustomEvent('mock-db-reset'));
+    }
     setTimeout(() => setJustReset(false), 1800);
   };
 

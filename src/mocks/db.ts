@@ -553,6 +553,24 @@ export function createInitialSeedDatabase(): MockDatabase {
       status: 'Active',
       renewalCount: 0,
     },
+    // Historical Returned Loan on WB-00422 (explains WB-00422 hasLoanHistory = true)
+    {
+      _id: 'loan-2040',
+      borrowCode: 'BR-2040',
+      studentId: '671a9b2c8f1b2c0015a4e901',
+      studentAccountId: 'S10428',
+      studentName: 'Maya Chen',
+      bookId: 'book-midnight-library',
+      copyId: 'copy-422',
+      copyCode: 'WB-00422',
+      borrowedAt: '2026-09-10',
+      dueDate: '2026-09-24',
+      returnedAt: '2026-09-22T14:15:00Z',
+      returnCondition: 'Good',
+      conditionNote: 'Returned in good condition',
+      status: 'Returned',
+      renewalCount: 0,
+    },
   ];
 
   return {

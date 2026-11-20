@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -10,7 +10,7 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   checkCopyForCheckoutApi,
   findStudentForCheckoutApi,
@@ -40,16 +40,19 @@ function normalizeCode(raw: string): string {
 export const StaffIssueBooksPage: React.FC = () => {
   const { showToast } = useToast();
   const isMockEnabled = import.meta.env.VITE_USE_MOCK !== 'false';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialStudentParam = searchParams.get('studentAccountId') || '';
+  const initialCopyParam = searchParams.get('copyCode') || '';
 
   // Step 1: Student lookup state
-  const [studentInput, setStudentInput] = useState('');
+  const [studentInput, setStudentInput] = useState(initialStudentParam);
   const [studentProfile, setStudentProfile] =
     useState<StudentCheckoutProfile | null>(null);
   const [isFindingStudent, setIsFindingStudent] = useState(false);
   const [studentError, setStudentError] = useState<string | null>(null);
 
   // Step 2: Copy lookup & selected batch state
-  const [copyInput, setCopyInput] = useState('');
+  const [copyInput, setCopyInput] = useState(initialCopyParam);
   const [isCheckingCopy, setIsCheckingCopy] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [blockedCopyCheck, setBlockedCopyCheck] =
@@ -63,6 +66,90 @@ export const StaffIssueBooksPage: React.FC = () => {
   const [isIssuing, setIsIssuing] = useState(false);
   const [issueError, setIssueError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<IssueTransactionReceipt | null>(null);
+
+  // Auto-populate student & held copy when navigated from Active Holds -> Issue
+  useEffect(() => {
+    if (!initialStudentParam) return;
+    let active = true;
+
+    const prefillFromQuery = async () => {
+      setIsFindingStudent(true);
+      setStudentError(null);
+      setCopyError(null);
+      setBlockedCopyCheck(null);
+      setIssueError(null);
+      try {
+        const profile = await findStudentForCheckoutApi(initialStudentParam);
+        if (!active) return;
+        setStudentProfile(profile);
+        setStudentInput(profile.student.accountId);
+
+        if (initialCopyParam && profile.eligibility.isEligible) {
+          setIsCheckingCopy(true);
+          try {
+            const checkResult = await checkCopyForCheckoutApi(
+              initialCopyParam,
+              profile.student.accountId,
+            );
+            if (!active) return;
+            if (checkResult.canAdd) {
+              setSelectedCopies([
+                {
+                  ...checkResult,
+                  dueDate: checkResult.defaultDueDate,
+                },
+              ]);
+              setCopyInput('');
+            } else {
+              setBlockedCopyCheck(checkResult);
+            }
+          } catch (copyErr) {
+            if (!active) return;
+            setCopyError(
+              copyErr instanceof ApiClientError
+                ? copyErr.message
+                : 'Unable to check that physical copy barcode.',
+            );
+          } finally {
+            if (active) setIsCheckingCopy(false);
+          }
+        }
+        setSearchParams({}, { replace: true });
+      } catch (err) {
+        if (!active) return;
+        const msg =
+          err instanceof ApiClientError
+            ? err.message
+            : 'Unable to find that student account.';
+        setStudentError(msg);
+      } finally {
+        if (active) setIsFindingStudent(false);
+      }
+    };
+
+    void prefillFromQuery();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialStudentParam, initialCopyParam]);
+
+  useEffect(() => {
+    const handleReset = () => {
+      setReceipt(null);
+      setStudentInput('');
+      setStudentProfile(null);
+      setStudentError(null);
+      setCopyInput('');
+      setCopyError(null);
+      setBlockedCopyCheck(null);
+      setSelectedCopies([]);
+      setConfirmModalOpen(false);
+      setIssueError(null);
+    };
+    window.addEventListener('mock-db-reset', handleReset);
+    return () => window.removeEventListener('mock-db-reset', handleReset);
+  }, []);
 
   const handleFindStudent = async (
     e?: React.FormEvent,

@@ -8,6 +8,8 @@ import {
   IssueTransactionReceipt,
   ReturnBookRequestBody,
   ReturnDetail,
+  StaffActiveHoldItem,
+  StaffLoanRecordItem,
   StudentCheckoutProfile,
 } from '../types/api';
 import {
@@ -760,4 +762,231 @@ export const staffCirculationHandlers = [
       });
     },
   ),
+
+  // 7.6 GET /staff/loans
+  http.get(`${API_BASE}/staff/loans`, async ({ request, cookies }) => {
+    await delay(140);
+    if (!isStaffAllowed(cookies)) {
+      return errorResponse(403, 'FORBIDDEN_ACCESS', 'Staff access required.');
+    }
+
+    const url = new URL(request.url);
+    const tab = url.searchParams.get('tab') === 'returned' ? 'returned' : 'active';
+    const qRaw = (url.searchParams.get('q') || '').trim().toLowerCase();
+    const qNorm = normalizeCode(qRaw);
+    const statusFilter = url.searchParams.get('status') || 'all';
+    const sortBy =
+      (url.searchParams.get('sortBy') as
+        | 'dueDate'
+        | 'borrowedAt'
+        | 'returnedAt') || (tab === 'returned' ? 'returnedAt' : 'dueDate');
+    const sortOrder = url.searchParams.get('sortOrder') === 'desc' ? 'desc' : 'asc';
+    const pageParam = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
+    const limitParam = Math.max(1, parseInt(url.searchParams.get('limit') || '6', 10) || 6);
+
+    const db = getMockDb();
+    const today = getDemoToday();
+
+    const mapped: Array<StaffLoanRecordItem & { daysDiff: number }> = db.loans
+      .filter((l) =>
+        tab === 'returned' ? l.status === 'Returned' : l.status === 'Active',
+      )
+      .map((l) => {
+        const book = db.books.find((b) => b._id === l.bookId);
+        const daysDiff = calculateDaysDifference(today, l.dueDate);
+        const isOverdue = l.status === 'Active' && daysDiff < 0;
+        let statusBadge = 'On loan';
+        if (l.status === 'Returned') {
+          statusBadge =
+            l.returnCondition && l.returnCondition !== 'Good'
+              ? `Returned · ${l.returnCondition}`
+              : 'Returned';
+        } else if (isOverdue) {
+          const overdueDays = Math.abs(daysDiff);
+          statusBadge = `Overdue · ${overdueDays} ${
+            overdueDays === 1 ? 'day' : 'days'
+          }`;
+        } else if (daysDiff === 0) {
+          statusBadge = 'Due today';
+        } else if (daysDiff === 1) {
+          statusBadge = 'Due tomorrow';
+        } else if (daysDiff === 2) {
+          statusBadge = 'Due in 2 days';
+        }
+
+        return {
+          _id: l._id,
+          borrowCode: l.borrowCode,
+          status: l.status,
+          book: {
+            _id: book?._id || l.bookId,
+            title: book?.title || 'Library Title',
+            author: book?.author || 'Unknown Author',
+            coverImageUrl: book?.coverImageUrl ?? null,
+          },
+          copy: {
+            _id: l.copyId,
+            copyCode: l.copyCode,
+          },
+          borrower: {
+            _id: l.studentId,
+            fullName: l.studentName,
+            accountId: l.studentAccountId,
+          },
+          borrowedAt: l.borrowedAt,
+          dueDate: l.dueDate,
+          returnedAt: l.returnedAt,
+          returnCondition: l.returnCondition,
+          isOverdue,
+          statusBadge,
+          daysDiff,
+        };
+      });
+
+    const filtered = mapped.filter((item) => {
+      if (tab === 'active' && statusFilter !== 'all') {
+        if (statusFilter === 'overdue' && !item.isOverdue) return false;
+        if (
+          statusFilter === 'due_soon' &&
+          (item.daysDiff < 0 || item.daysDiff > 2)
+        )
+          return false;
+        if (statusFilter === 'on_loan' && item.daysDiff <= 2) return false;
+      }
+
+      if (qRaw) {
+        const matchesText =
+          item.borrower.fullName.toLowerCase().includes(qRaw) ||
+          item.borrower.accountId.toLowerCase().includes(qRaw) ||
+          item.book.title.toLowerCase().includes(qRaw) ||
+          item.book.author.toLowerCase().includes(qRaw) ||
+          normalizeCode(item.copy.copyCode).includes(qNorm) ||
+          normalizeCode(item.borrowCode).includes(qNorm);
+        if (!matchesText) return false;
+      }
+
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      const keyA =
+        sortBy === 'returnedAt'
+          ? a.returnedAt || a.dueDate
+          : sortBy === 'borrowedAt'
+            ? a.borrowedAt
+            : a.dueDate;
+      const keyB =
+        sortBy === 'returnedAt'
+          ? b.returnedAt || b.dueDate
+          : sortBy === 'borrowedAt'
+            ? b.borrowedAt
+            : b.dueDate;
+      const cmp = keyA.localeCompare(keyB);
+      return sortOrder === 'desc' ? -cmp : cmp;
+    });
+
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / limitParam));
+    const currentPage = Math.min(pageParam, totalPages);
+    const startIndex = (currentPage - 1) * limitParam;
+    const items: StaffLoanRecordItem[] = filtered
+      .slice(startIndex, startIndex + limitParam)
+      .map(({ daysDiff: _daysDiff, ...rest }) => rest);
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        items,
+        pagination: {
+          totalItems,
+          currentPage,
+          totalPages,
+          limit: limitParam,
+        },
+      },
+    });
+  }),
+
+  // 7.7 GET /staff/holds
+  http.get(`${API_BASE}/staff/holds`, async ({ request, cookies }) => {
+    await delay(140);
+    if (!isStaffAllowed(cookies)) {
+      return errorResponse(403, 'FORBIDDEN_ACCESS', 'Staff access required.');
+    }
+
+    const url = new URL(request.url);
+    const qRaw = (url.searchParams.get('q') || '').trim().toLowerCase();
+    const qNorm = normalizeCode(qRaw);
+    const pageParam = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
+    const limitParam = Math.max(1, parseInt(url.searchParams.get('limit') || '10', 10) || 10);
+
+    const db = getMockDb();
+    const today = getDemoToday();
+    const demoNowMs = new Date(`${today}T11:00:00Z`).getTime();
+
+    const mapped: StaffActiveHoldItem[] = db.holds
+      .filter((h) => h.status === 'Ready')
+      .map((h) => {
+        const student = db.users.find((u) => u._id === h.studentId);
+        const book = db.books.find((b) => b._id === h.bookId);
+        const copy = db.copies.find((c) => c._id === h.copyId);
+        const collectByMs = new Date(h.collectBy).getTime();
+
+        return {
+          _id: h._id,
+          holdCode: h.holdCode,
+          status: 'Ready' as const,
+          requestedAt: h.requestedAt,
+          collectBy: h.collectBy,
+          isPastDeadline:
+            !Number.isNaN(collectByMs) && demoNowMs > collectByMs,
+          student: {
+            _id: h.studentId,
+            accountId: h.studentAccountId,
+            fullName: h.studentName,
+            yearGroup: student?.yearGroup ?? null,
+          },
+          book: {
+            _id: book?._id || h.bookId,
+            title: book?.title || 'Library Title',
+            author: book?.author || 'Unknown Author',
+            coverImageUrl: book?.coverImageUrl ?? null,
+          },
+          copy: {
+            _id: h.copyId,
+            copyCode: h.copyCode,
+            homeLocation: copy?.homeLocation || h.pickupLocation,
+          },
+        };
+      })
+      .filter((item) => {
+        if (!qRaw) return true;
+        return (
+          normalizeCode(item.holdCode).includes(qNorm) ||
+          normalizeCode(item.copy.copyCode).includes(qNorm) ||
+          item.student.accountId.toLowerCase().includes(qRaw) ||
+          item.student.fullName.toLowerCase().includes(qRaw) ||
+          item.book.title.toLowerCase().includes(qRaw)
+        );
+      });
+
+    const totalItems = mapped.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / limitParam));
+    const currentPage = Math.min(pageParam, totalPages);
+    const startIndex = (currentPage - 1) * limitParam;
+    const items = mapped.slice(startIndex, startIndex + limitParam);
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        items,
+        pagination: {
+          totalItems,
+          currentPage,
+          totalPages,
+          limit: limitParam,
+        },
+      },
+    });
+  }),
 ];

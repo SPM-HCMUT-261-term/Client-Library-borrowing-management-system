@@ -40,7 +40,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
       <div
         aria-live="polite"
-        className="fixed bottom-5 right-5 z-[60] flex flex-col gap-2.5 max-w-[380px] w-[calc(100vw-2.5rem)] pointer-events-none"
+        className="fixed bottom-16 right-5 z-[60] flex flex-col gap-2.5 max-w-[380px] w-[calc(100vw-2.5rem)] pointer-events-none"
       >
         {toasts.map((toast) => {
           const styles =

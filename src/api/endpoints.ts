@@ -12,6 +12,8 @@ import {
   CreateBookRequestBody,
   FeaturedBookItem,
   GetBooksParams,
+  GetStaffHoldsParams,
+  GetStaffLoansParams,
   HoldConfirmation,
   IssueBooksRequestBody,
   IssueTransactionReceipt,
@@ -20,6 +22,8 @@ import {
   RenewLoanResult,
   ReturnBookRequestBody,
   ReturnDetail,
+  StaffActiveHoldsPage,
+  StaffLoanRecordsPage,
   StudentCheckoutProfile,
   UpdateBookRequestBody,
   UpdateCopyRequestBody,
@@ -250,4 +254,36 @@ export async function returnBookApi(
       body: JSON.stringify(body),
     },
   );
+}
+
+export async function getStaffLoanRecordsApi(
+  params: GetStaffLoansParams = {},
+): Promise<StaffLoanRecordsPage> {
+  const searchParams = new URLSearchParams();
+  if (params.tab) searchParams.set('tab', params.tab);
+  if (params.q) searchParams.set('q', params.q);
+  if (params.status) searchParams.set('status', params.status);
+  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  if (params.page) searchParams.set('page', String(params.page));
+  if (params.limit) searchParams.set('limit', String(params.limit));
+
+  const qs = searchParams.toString();
+  const url = qs ? `/staff/loans?${qs}` : '/staff/loans';
+  const res = await apiRequest<StaffLoanRecordsPage>(url, { method: 'GET' });
+  return res.data;
+}
+
+export async function getStaffActiveHoldsApi(
+  params: GetStaffHoldsParams = {},
+): Promise<StaffActiveHoldsPage> {
+  const searchParams = new URLSearchParams();
+  if (params.q) searchParams.set('q', params.q);
+  if (params.page) searchParams.set('page', String(params.page));
+  if (params.limit) searchParams.set('limit', String(params.limit));
+
+  const qs = searchParams.toString();
+  const url = qs ? `/staff/holds?${qs}` : '/staff/holds';
+  const res = await apiRequest<StaffActiveHoldsPage>(url, { method: 'GET' });
+  return res.data;
 }

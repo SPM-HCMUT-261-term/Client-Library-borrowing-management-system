@@ -115,6 +115,20 @@ export const StaffReturnBookPage: React.FC = () => {
     }
   }, [initialCopyParam, performLookup]);
 
+  useEffect(() => {
+    const handleReset = () => {
+      setCompletedReturn(null);
+      setLookup(null);
+      setCopyInput('');
+      setLookupError(null);
+      setReturnError(null);
+      setCondition('Good');
+      setConditionNote('');
+    };
+    window.addEventListener('mock-db-reset', handleReset);
+    return () => window.removeEventListener('mock-db-reset', handleReset);
+  }, []);
+
   const handleFindSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     void performLookup(copyInput);

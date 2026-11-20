@@ -39,6 +39,7 @@ const cards = [
     description:
       'View active loans and returned history. Search by student, book or copy.',
     icon: Clock3,
+    to: '/staff/loans',
     surface: 'bg-[#F2EEFF]',
     accent: 'bg-[#7C3AED] text-white',
     titleColor: 'text-[#7C3AED]',

@@ -83,6 +83,16 @@ export const StaffInventoryPage: React.FC = () => {
 
   useEffect(() => {
     void loadBooks();
+    const handleReset = () => {
+      setQueryInput('');
+      setAppliedQuery('');
+      setCategory('All');
+      setStockFilter('all');
+      setPage(1);
+      void loadBooks();
+    };
+    window.addEventListener('mock-db-reset', handleReset);
+    return () => window.removeEventListener('mock-db-reset', handleReset);
   }, [loadBooks]);
 
   useEffect(() => {

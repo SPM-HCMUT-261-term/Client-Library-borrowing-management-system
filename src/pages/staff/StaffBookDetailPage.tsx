@@ -97,6 +97,9 @@ export const StaffBookDetailPage: React.FC = () => {
 
   useEffect(() => {
     void loadBook();
+    const handleReset = () => void loadBook();
+    window.addEventListener('mock-db-reset', handleReset);
+    return () => window.removeEventListener('mock-db-reset', handleReset);
   }, [loadBook]);
 
   const handleSaveTitle = async (e: React.FormEvent) => {

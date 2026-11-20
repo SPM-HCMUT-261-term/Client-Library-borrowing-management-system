@@ -203,8 +203,43 @@ try {
   assert.equal(damagedReturn.status, 200);
   assert.equal(damagedReturn.body.data.copy.newState, 'Damaged');
 
+  // 15. Loan records: active loans tab + search + overdue filter + returned history tab
+  const activeLoansPage = await request('/staff/loans?tab=active');
+  assert.equal(activeLoansPage.status, 200);
+  assert.ok(activeLoansPage.body.data.items.length >= 1);
+
+  const returnedLoansPage = await request('/staff/loans?tab=returned');
+  assert.equal(returnedLoansPage.status, 200);
+  assert.ok(returnedLoansPage.body.data.items.length >= 2);
+
+  const searchReturned = await request(
+    '/staff/loans?tab=returned&q=WB-00318',
+  );
+  assert.equal(searchReturned.status, 200);
+  assert.equal(searchReturned.body.data.items.length, 1);
+  assert.equal(searchReturned.body.data.items[0].returnCondition, 'Damaged');
+
+  // 16. Active holds: student places a new hold, staff lists /staff/holds and releases it via DELETE /holds/:id
+  const secondHold = await request(
+    '/holds',
+    'POST',
+    { bookId: 'book-book-thief' },
+    'S10428',
+  );
+  assert.equal(secondHold.status, 201);
+  const secondHoldCode = secondHold.body.data.holdCode;
+
+  const staffHoldsPage = await request('/staff/holds');
+  assert.equal(staffHoldsPage.status, 200);
+  assert.equal(staffHoldsPage.body.data.items.length, 1);
+  assert.equal(staffHoldsPage.body.data.items[0].holdCode, secondHoldCode);
+
+  const releaseHoldRes = await request(`/holds/${secondHoldCode}`, 'DELETE');
+  assert.equal(releaseHoldRes.status, 200);
+  assert.equal((await request('/staff/holds')).body.data.items.length, 0);
+
   console.log(
-    'PASS: staff student lookup, copy checkout-check, batch issue, hold fulfillment, active loan lookup by copy, book return (Good & Damaged), and 404/409 guards.',
+    'PASS: staff student lookup, copy checkout-check, batch issue, hold fulfillment, active loan lookup by copy, book return, loan records (active/returned), and counter hold release.',
   );
 } finally {
   server.close();
