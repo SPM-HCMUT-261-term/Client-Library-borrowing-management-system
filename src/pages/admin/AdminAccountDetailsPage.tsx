@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AccountSecurityModal } from '../../components/admin/AccountSecurityModal';
 import { EditAccountModal } from '../../components/admin/EditAccountModal';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { getAdminUserApi, updateAdminUserApi } from '../../api/admin';
 import { ApiClientError } from '../../api/client';
 import { AdminModal } from '../../components/admin/AdminModal';
@@ -28,6 +29,7 @@ export const AdminAccountDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, refreshUser } = useAuth();
+  const { showToast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [securityAction, setSecurityAction] = useState<'reset' | 'delete' | null>(null);
   const { id = '' } = useParams();
@@ -83,18 +85,24 @@ export const AdminAccountDetailsPage: React.FC = () => {
       });
       setAccount(updated);
       setSelectedRole(updated.role);
-      setSuccessMessage(
+      const msg =
         role !== account.role
           ? `Role updated to ${roleNames[role]}.`
           : status === 'Active'
             ? 'Account unlocked.'
-            : 'Account locked.',
-      );
+            : 'Account locked.';
+      setSuccessMessage(msg);
+      showToast(msg, 'success');
       setRoleModalOpen(false);
       setAccessModalOpen(false);
       if (updated.accountId === user?.accountId) await refreshUser();
     } catch (err) {
-      setModalError(err instanceof ApiClientError ? err.message : 'Unable to update this account.');
+      const msg =
+        err instanceof ApiClientError
+          ? err.message
+          : 'Unable to update this account.';
+      setModalError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -165,6 +173,29 @@ export const AdminAccountDetailsPage: React.FC = () => {
               </div>
             )}
 
+            {account.role === 'student' && (
+              <div className="mt-4 grid grid-cols-3 gap-2.5">
+                <div className="rounded-md border border-brand-border bg-brand-canvas/60 px-3 py-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-slate">Active loans</p>
+                  <p className="mt-1 text-[16px] font-semibold text-brand-ink">
+                    {account.activeLoansCount} / {account.maxLoansLimit}
+                  </p>
+                </div>
+                <div className="rounded-md border border-brand-border bg-brand-canvas/60 px-3 py-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-slate">Overdue</p>
+                  <p className={`mt-1 text-[16px] font-semibold ${account.overdueLoansCount > 0 ? 'text-[#A1372B]' : 'text-brand-ink'}`}>
+                    {account.overdueLoansCount}
+                  </p>
+                </div>
+                <div className="rounded-md border border-brand-border bg-brand-canvas/60 px-3 py-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-slate">Unpaid fines</p>
+                  <p className={`mt-1 text-[16px] font-semibold ${account.unpaidFines > 0 ? 'text-[#B55400]' : 'text-brand-ink'}`}>
+                    ${Number(account.unpaidFines || 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 pt-4 border-t border-brand-border">
               <h3 className="text-[13px] font-semibold">Role permissions</h3>
               <p className="mt-3 text-[13px] leading-5 text-brand-slate">{rolePermissions[account.role]}</p>
@@ -175,13 +206,22 @@ export const AdminAccountDetailsPage: React.FC = () => {
 
       {account && securityAction && <AccountSecurityModal account={account} action={securityAction} onCancel={() => setSecurityAction(null)} onSuccess={() => {
         setSecurityAction(null);
-        if (securityAction === 'reset') { setSuccessMessage('Password reset successfully.'); return; }
-        if (account.accountId === user?.accountId) { void logout().then(() => navigate('/login', { replace: true })); return; }
+        if (securityAction === 'reset') {
+          setSuccessMessage('Password reset successfully.');
+          showToast(`Password reset for ${account.accountId}.`, 'success');
+          return;
+        }
+        if (account.accountId === user?.accountId) {
+          showToast(`Account ${account.accountId} deleted.`, 'info');
+          void logout().then(() => navigate('/login', { replace: true }));
+          return;
+        }
         navigate('/admin/accounts', { replace: true, state: { message: `Account ${account.accountId} deleted successfully.` } });
       }} />}
 
       {account && editOpen && <EditAccountModal account={account} onCancel={() => setEditOpen(false)} onSaved={updated => {
         setAccount(updated); setEditOpen(false); setSuccessMessage('Account details updated.');
+        showToast(`Details updated for ${updated.accountId}.`, 'success');
         if (updated.accountId === user?.accountId) void refreshUser();
       }} />}
 

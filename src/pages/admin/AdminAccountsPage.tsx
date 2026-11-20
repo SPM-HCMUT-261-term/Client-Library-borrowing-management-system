@@ -5,6 +5,7 @@ import { CreateAccountModal } from '../../components/admin/CreateAccountModal';
 import { getAdminUsersApi } from '../../api/admin';
 import { ApiClientError } from '../../api/client';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
+import { useToast } from '../../context/ToastContext';
 import { AdminUser, AdminUsersPage, UserRole, UserStatus } from '../../types/api';
 
 function roleLabel(role: UserRole) {
@@ -28,15 +29,20 @@ function formatDate(value: string) {
 export const AdminAccountsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
   const [queryInput, setQueryInput] = useState('');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<'all' | UserRole>('all');
   const [status, setStatus] = useState<'all' | UserStatus>('all');
   const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
   const [result, setResult] = useState<AdminUsersPage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bannerMessage, setBannerMessage] = useState<string | null>(
+    (location.state as { message?: string } | null)?.message || null,
+  );
   const [resetTick, setResetTick] = useState(0);
 
   const loadAccounts = useCallback(async () => {
@@ -67,6 +73,33 @@ export const AdminAccountsPage: React.FC = () => {
     return () => window.removeEventListener('mock-db-reset', handleReset);
   }, []);
 
+  useEffect(() => {
+    const stateMsg = (location.state as { message?: string } | null)?.message;
+    if (stateMsg) {
+      setBannerMessage(stateMsg);
+      showToast(stateMsg, 'success');
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate, showToast]);
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
+
+  const commitPageInput = () => {
+    const parsed = Number.parseInt(pageInput.trim(), 10);
+    if (Number.isNaN(parsed)) {
+      setPageInput(String(page));
+      return;
+    }
+    const maxPage = Math.max(1, result?.pagination.totalPages ?? 1);
+    const clamped = Math.min(maxPage, Math.max(1, parsed));
+    setPageInput(String(clamped));
+    if (clamped !== page) {
+      setPage(clamped);
+    }
+  };
+
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
     setPage(1);
@@ -76,7 +109,12 @@ export const AdminAccountsPage: React.FC = () => {
   return (
     <div>
       <AdminPageHeader breadcrumb="Home / Accounts" title="School accounts" description="Find school accounts, manage assigned roles, and review account access." icon={UsersRound} action={<button onClick={() => setCreateOpen(true)} className="h-10 px-5 rounded-md bg-brand-teal text-white text-[13px] font-semibold hover:bg-brand-tealHover">Create account</button>} />
-      {location.state?.message && <p role="status" className="mt-4 rounded-md bg-brand-mint p-3 text-[13px] text-brand-teal">{location.state.message}</p>}
+      {bannerMessage && (
+        <div role="status" className="mt-4 rounded-md bg-brand-mint p-3 text-[13px] text-brand-teal flex items-center justify-between gap-3">
+          <span>{bannerMessage}</span>
+          <button type="button" onClick={() => setBannerMessage(null)} className="text-[12px] font-semibold underline shrink-0">Dismiss</button>
+        </div>
+      )}
       <section className="mt-[23px] rounded-[10px] border border-brand-border bg-white p-6 min-h-[618px]">
         <h2 className="text-[17px] leading-[25px] font-semibold">Account directory</h2>
         <p className="mt-0.5 text-[13px] text-brand-slate">School-issued accounts and their current access.</p>
@@ -121,12 +159,40 @@ export const AdminAccountsPage: React.FC = () => {
           </table>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-[12px] text-brand-slate">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[12px] text-brand-slate">
           <span>Showing {result?.items.length ?? 0} of {result?.pagination.totalItems ?? 0} accounts</span>
-          {(result?.pagination.totalPages ?? 0) > 1 && <div className="flex items-center gap-2"><button aria-label="Previous page" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => p - 1)} className="w-8 h-8 border border-brand-border rounded flex items-center justify-center disabled:opacity-40"><ChevronLeft className="w-4 h-4" /></button><span>Page {page} of {result?.pagination.totalPages}</span><button aria-label="Next page" disabled={page >= (result?.pagination.totalPages ?? 1) || isLoading} onClick={() => setPage((p) => p + 1)} className="w-8 h-8 border border-brand-border rounded flex items-center justify-center disabled:opacity-40"><ChevronRight className="w-4 h-4" /></button></div>}
+          {(result?.pagination.totalPages ?? 0) > 1 && (
+            <div className="flex items-center gap-2">
+              <button aria-label="Previous page" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => p - 1)} className="w-8 h-8 border border-brand-border rounded flex items-center justify-center disabled:opacity-40"><ChevronLeft className="w-4 h-4" /></button>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  commitPageInput();
+                }}
+                className="inline-flex items-center gap-1.5"
+              >
+                <label htmlFor="admin-accounts-page-input">Page</label>
+                <input
+                  id="admin-accounts-page-input"
+                  type="text"
+                  inputMode="numeric"
+                  aria-label="Go to page"
+                  value={pageInput}
+                  onChange={(e) => setPageInput(e.target.value)}
+                  onBlur={commitPageInput}
+                  className="w-11 h-8 rounded border border-brand-border bg-white px-1.5 text-center text-[12px] font-semibold text-brand-ink focus:outline-none focus:border-brand-teal"
+                />
+                <span>of {result?.pagination.totalPages}</span>
+              </form>
+              <button aria-label="Next page" disabled={page >= (result?.pagination.totalPages ?? 1) || isLoading} onClick={() => setPage((p) => p + 1)} className="w-8 h-8 border border-brand-border rounded flex items-center justify-center disabled:opacity-40"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+          )}
         </div>
       </section>
-      {createOpen && <CreateAccountModal onCancel={() => setCreateOpen(false)} onCreated={account => navigate(`/admin/accounts/${encodeURIComponent(account.accountId)}`, { state: { message: 'Account created successfully.' } })} />}
+      {createOpen && <CreateAccountModal onCancel={() => setCreateOpen(false)} onCreated={account => {
+        showToast(`Account ${account.accountId} created successfully.`, 'success');
+        navigate(`/admin/accounts/${encodeURIComponent(account.accountId)}`, { state: { message: 'Account created successfully.' } });
+      }} />}
     </div>
   );
 };
