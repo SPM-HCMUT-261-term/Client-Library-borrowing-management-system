@@ -164,3 +164,35 @@ feat(my-borrowing): implement My Borrowing dashboard with online loan renewal an
 - Support hold cancellation from My Borrowing via DELETE /api/v1/holds/:id
 - Render Your Account loan quota progress bar, Fines & charges summary, and Borrowing history
 ```
+
+---
+
+## Milestone 7: Admin Account Management Workspace
+
+### Changes Made
+- **Admin Layout & Pages**:
+  - Created [`AdminLayout`](file:///Users/qcl/personal/projects/BookBorrow/src/components/admin/AdminLayout.tsx), [`AdminPageHeader`](file:///Users/qcl/personal/projects/BookBorrow/src/components/admin/AdminPageHeader.tsx), [`AdminModal`](file:///Users/qcl/personal/projects/BookBorrow/src/components/admin/AdminModal.tsx), [`AdminHomePage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/admin/AdminHomePage.tsx), [`AdminAccountsPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/admin/AdminAccountsPage.tsx), [`AdminAccountDetailsPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/admin/AdminAccountDetailsPage.tsx), and [`AdminProfilePage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/admin/AdminProfilePage.tsx).
+- **Admin Endpoints & MSW Handlers**:
+  - Created [src/mocks/adminHandlers.ts](file:///Users/qcl/personal/projects/BookBorrow/src/mocks/adminHandlers.ts) and verification script [scripts/check-admin-mocks.mjs](file:///Users/qcl/personal/projects/BookBorrow/scripts/check-admin-mocks.mjs) covering `GET /admin/users`, `POST /admin/users`, `GET /admin/users/:id`, `PATCH /admin/users/:id/role`, `PATCH /admin/users/:id/status`, `POST /admin/users/:id/reset-password`, and `DELETE /admin/users/:id` (with `SELF_ACTION_NOT_ALLOWED`, `LAST_ADMIN_PROTECTION`, and `ACTIVE_CIRCULATION_EXISTS` guards).
+
+---
+
+## Milestone 8: Staff Inventory, Multi-Copy Issue & Return Counter, and Circulation Records
+
+### Changes Made
+- **Staff Inventory & Physical Copies**:
+  - Created [`StaffInventoryPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/staff/StaffInventoryPage.tsx), [`StaffBookDetailPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/staff/StaffBookDetailPage.tsx), [`AddBookModal`](file:///Users/qcl/personal/projects/BookBorrow/src/components/staff/AddBookModal.tsx), and [src/mocks/staffInventoryHandlers.ts](file:///Users/qcl/personal/projects/BookBorrow/src/mocks/staffInventoryHandlers.ts) implementing book CRUD (`POST /books`, `PUT /books/:id`, `DELETE /books/:id`) and physical copy management (`POST /books/:id/copies`, `PATCH /copies/:id`, `DELETE /copies/:id`).
+- **Staff Counter Circulation & Records**:
+  - Created [`StaffHomePage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/staff/StaffHomePage.tsx), [`StaffIssueBooksPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/staff/StaffIssueBooksPage.tsx), [`StaffReturnBookPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/staff/StaffReturnBookPage.tsx), [`StaffLoansPage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/staff/StaffLoansPage.tsx), and [src/mocks/staffCirculationHandlers.ts](file:///Users/qcl/personal/projects/BookBorrow/src/mocks/staffCirculationHandlers.ts) implementing multi-copy checkout (`GET /staff/checkout/student/:accountId`, `GET /staff/checkout/copy/:copyCode`, `POST /staff/loans/issue`), return inspection (`GET /staff/return/copy/:copyCode`, `POST /staff/loans/return`), and circulation records (`GET /staff/loans`, `GET /staff/holds`).
+
+---
+
+## Milestone 9: Hybrid Backend Integration & Unified UI/UX Polish
+
+### Changes Made
+- **Hybrid MSW + Real Backend Mode (`VITE_USE_MOCK=hybrid`)**:
+  - Configured [src/api/client.ts](file:///Users/qcl/personal/projects/BookBorrow/src/api/client.ts) (`credentials: 'include'` for `httpOnly` JWT cookies) and [src/mocks/handlers.ts](file:///Users/qcl/personal/projects/BookBorrow/src/mocks/handlers.ts) (`passthrough()` for `/auth/*` and `/admin/users/*` when `VITE_USE_MOCK=hybrid`).
+- **Navigation, Profile Pages & Color-Coded Staff Workflows**:
+  - Created [`UserMenuDropdown`](file:///Users/qcl/personal/projects/BookBorrow/src/components/UserMenuDropdown.tsx), [`StaffProfilePage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/staff/StaffProfilePage.tsx), and [`StudentProfilePage`](file:///Users/qcl/personal/projects/BookBorrow/src/pages/StudentProfilePage.tsx) to unify the top-right user menu across Student, Staff, and Admin views.
+  - Color-coded the Staff workspace header buttons and pages: **Lend book** (amber `#E97700`), **Return book** (cobalt `#3B6EF5`), **Inventory** (clinical teal `#17645F`), and **Records** (clinical purple `#7C3AED` with leading `Borrow ID` / `Hold ID` column and one-click copy).
+
