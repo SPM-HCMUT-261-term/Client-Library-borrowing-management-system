@@ -5,6 +5,10 @@ import { AdminUser, UserRole } from '../../types/api';
 import { AdminModal } from './AdminModal';
 
 export const adminInputClass = 'mt-[9px] h-12 w-full rounded-lg border border-brand-border bg-white px-[14px] text-[14px] font-normal text-brand-ink outline-none focus:border-brand-teal focus:ring-1 focus:ring-brand-teal disabled:opacity-60';
+export const FULL_NAME_ERROR = 'Full name must contain only letters, spaces, hyphens, apostrophes, or periods.';
+export function isValidFullName(value: string): boolean {
+  return /^[\p{L}\s'.-]+$/u.test(value.trim());
+}
 
 export const CreateAccountModal: React.FC<{ onCancel: () => void; onCreated: (user: AdminUser) => void }> = ({ onCancel, onCreated }) => {
   const [accountId, setAccountId] = useState('');
@@ -19,7 +23,8 @@ export const CreateAccountModal: React.FC<{ onCancel: () => void; onCreated: (us
   const create = async () => {
     if (isSubmitting) return;
     if (!accountId.trim() || !fullName.trim()) { setError('Enter a school account ID and full name.'); return; }
-    if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(fullName.trim())) { setError('Full name must contain only English or Vietnamese letters and spaces.'); return; }
+    if (!isValidFullName(fullName)) { setError(FULL_NAME_ERROR); return; }
+    if (password.trim().length < 6) { setError('Initial password must be at least 6 characters.'); return; }
     if (password !== confirmation) { setError('Passwords do not match.'); return; }
     setError(null);
     setIsSubmitting(true);

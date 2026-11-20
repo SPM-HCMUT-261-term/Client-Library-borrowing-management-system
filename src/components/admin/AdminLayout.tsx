@@ -35,8 +35,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => (
             <NavLink to="/admin/accounts" className={navClass}>
               {({ isActive }) => <><span>Accounts</span>{isActive && <span className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-teal" />}</>}
             </NavLink>
-            <span className="h-full flex items-center text-[14px] text-brand-slate" aria-disabled="true">Violations</span>
-            <span className="h-full flex items-center text-[14px] text-brand-slate" aria-disabled="true">Activity log</span>
           </nav>
         </div>
 

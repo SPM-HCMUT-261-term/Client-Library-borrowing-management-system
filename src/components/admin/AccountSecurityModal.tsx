@@ -22,6 +22,7 @@ export const AccountSecurityModal: React.FC<{
   const submit = async () => {
     if (isSubmitting) return;
     if (deleting && (historyBlocked || accountConfirmation !== account.accountId)) return;
+    if (!deleting && password.trim().length < 6) { setError('New password must be at least 6 characters.'); return; }
     if (!deleting && password !== confirmation) { setError('Passwords do not match.'); return; }
     setError(null); setIsSubmitting(true);
     try {

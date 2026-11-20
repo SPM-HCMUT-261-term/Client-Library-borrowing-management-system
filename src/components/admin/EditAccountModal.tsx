@@ -3,7 +3,7 @@ import { updateAdminUserApi } from '../../api/admin';
 import { ApiClientError } from '../../api/client';
 import { AdminUser } from '../../types/api';
 import { AdminModal } from './AdminModal';
-import { adminInputClass } from './CreateAccountModal';
+import { adminInputClass, FULL_NAME_ERROR, isValidFullName } from './CreateAccountModal';
 
 export const EditAccountModal: React.FC<{ account: AdminUser; onCancel: () => void; onSaved: (account: AdminUser) => void }> = ({ account, onCancel, onSaved }) => {
   const [fullName, setFullName] = useState(account.fullName);
@@ -13,6 +13,7 @@ export const EditAccountModal: React.FC<{ account: AdminUser; onCancel: () => vo
   const save = async () => {
     if (isSubmitting) return;
     if (!fullName.trim()) { setError('Full name is required.'); return; }
+    if (!isValidFullName(fullName)) { setError(FULL_NAME_ERROR); return; }
     setError(null); setIsSubmitting(true);
     try {
       onSaved(await updateAdminUserApi(account.accountId, {

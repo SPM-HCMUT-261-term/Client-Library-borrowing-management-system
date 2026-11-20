@@ -20,8 +20,8 @@ export const AdminProfilePage: React.FC = () => {
   return (
     <div>
       <AdminPageHeader breadcrumb="Home / My profile" title="My profile" description="View your school-issued account and session details." icon={UserRound} iconClassName="bg-[#3B6EF5]" />
-      <div className="mt-[23px] grid grid-cols-1 lg:grid-cols-[1.36fr_1fr] gap-4">
-        <section className="min-h-[430px] rounded-[10px] border border-brand-border bg-white p-6">
+      <div className="mt-[23px] max-w-[720px]">
+        <section className="rounded-[10px] border border-brand-border bg-white p-6">
           <h2 className="text-[17px] font-semibold">{user?.fullName}</h2>
           <p className="mt-0.5 text-[13px] text-brand-slate">Westbridge School Library</p>
           <dl className="mt-4">
@@ -29,16 +29,10 @@ export const AdminProfilePage: React.FC = () => {
             <div className="min-h-[42px] grid grid-cols-[124px_1fr] sm:grid-cols-[175px_1fr] items-center"><dt className="text-[13px] text-brand-slate">Assigned role</dt><dd className="text-[14px] font-semibold">Admin</dd></div>
             <div className="min-h-[42px] grid grid-cols-[124px_1fr] sm:grid-cols-[175px_1fr] items-center"><dt className="text-[13px] text-brand-slate">Account access</dt><dd className="text-[14px] font-semibold">{user?.status}</dd></div>
           </dl>
-          <div className="mt-2 pt-3 border-t border-brand-border">
+          <div className="mt-4 pt-4 border-t border-brand-border">
             <button type="button" onClick={() => setModalOpen(true)} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Sign out</button>
           </div>
         </section>
-
-        <aside className="min-h-[193px] lg:min-h-0 lg:h-[193px] rounded-[10px] border border-brand-border bg-white p-6">
-          <h2 className="text-[17px] font-semibold">Account access</h2>
-          <p className="mt-0.5 text-[13px] leading-5 text-brand-slate">Manage your password through the school account recovery process.</p>
-          <button type="button" disabled className="mt-4 h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal opacity-60 cursor-not-allowed">Password recovery</button>
-        </aside>
       </div>
 
       {modalOpen && <AdminModal title="Sign out of Chapter?" description="This ends your current admin session on this device." confirmLabel="Sign out" isSubmitting={isSigningOut} onCancel={() => setModalOpen(false)} onConfirm={() => void signOut()} />}

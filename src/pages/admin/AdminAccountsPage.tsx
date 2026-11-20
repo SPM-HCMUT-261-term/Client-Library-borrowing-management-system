@@ -37,6 +37,7 @@ export const AdminAccountsPage: React.FC = () => {
   const [result, setResult] = useState<AdminUsersPage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resetTick, setResetTick] = useState(0);
 
   const loadAccounts = useCallback(async () => {
     setIsLoading(true);
@@ -48,9 +49,23 @@ export const AdminAccountsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, query, role, status]);
+  }, [page, query, role, status, resetTick]);
 
   useEffect(() => { void loadAccounts(); }, [loadAccounts]);
+
+  useEffect(() => {
+    const handleReset = () => {
+      setQueryInput('');
+      setQuery('');
+      setRole('all');
+      setStatus('all');
+      setPage(1);
+      setError(null);
+      setResetTick((t) => t + 1);
+    };
+    window.addEventListener('mock-db-reset', handleReset);
+    return () => window.removeEventListener('mock-db-reset', handleReset);
+  }, []);
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();

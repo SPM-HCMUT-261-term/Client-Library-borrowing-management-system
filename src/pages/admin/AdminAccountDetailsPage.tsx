@@ -13,7 +13,7 @@ import { AdminUser, UserRole } from '../../types/api';
 const roleNames: Record<UserRole, string> = { student: 'Student', staff: 'Staff', admin: 'Admin' };
 const rolePermissions: Record<UserRole, string> = {
   student: 'Browse the catalog, view personal loans, and request eligible renewals.',
-  staff: 'Manage books and copies, issue and return loans, and resolve violations.',
+  staff: 'Manage books and copies, issue and return loans, and review counter holds.',
   admin: 'Manage school accounts, assigned roles, and library oversight.',
 };
 
@@ -34,6 +34,7 @@ export const AdminAccountDetailsPage: React.FC = () => {
   const [account, setAccount] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(location.state?.message || null);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [accessModalOpen, setAccessModalOpen] = useState(false);
@@ -54,12 +55,25 @@ export const AdminAccountDetailsPage: React.FC = () => {
     }
   }, [id]);
 
-  useEffect(() => { void loadAccount(); }, [loadAccount]);
+  useEffect(() => {
+    void loadAccount();
+    const handleReset = () => {
+      setSuccessMessage(null);
+      setModalError(null);
+      setRoleModalOpen(false);
+      setAccessModalOpen(false);
+      setEditOpen(false);
+      setSecurityAction(null);
+      void loadAccount();
+    };
+    window.addEventListener('mock-db-reset', handleReset);
+    return () => window.removeEventListener('mock-db-reset', handleReset);
+  }, [loadAccount]);
 
   const saveUpdate = async (role: UserRole, status: 'Active' | 'Inactive') => {
     if (!account) return;
     setIsSubmitting(true);
-    setError(null);
+    setModalError(null);
     try {
       const updated = await updateAdminUserApi(account.accountId, {
         fullName: account.fullName,
@@ -80,7 +94,7 @@ export const AdminAccountDetailsPage: React.FC = () => {
       setAccessModalOpen(false);
       if (updated.accountId === user?.accountId) await refreshUser();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Unable to update this account.');
+      setModalError(err instanceof ApiClientError ? err.message : 'Unable to update this account.');
     } finally {
       setIsSubmitting(false);
     }
@@ -121,8 +135,8 @@ export const AdminAccountDetailsPage: React.FC = () => {
             <div className="mt-2 pt-3 border-t border-brand-border flex flex-wrap gap-3">
               <button type="button" onClick={() => setEditOpen(true)} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Edit details</button>
               <button type="button" onClick={() => setSecurityAction('reset')} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Reset password</button>
-              <button type="button" onClick={() => { setSelectedRole(account.role); setRoleModalOpen(true); }} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Change role</button>
-              <button type="button" onClick={() => setAccessModalOpen(true)} className={`h-10 px-5 rounded-md text-[13px] font-semibold ${account.status === 'Active' ? 'bg-[#A1372B] text-white' : 'border border-brand-border text-brand-teal'}`}>{account.status === 'Active' ? 'Lock account' : 'Unlock account'}</button>
+              <button type="button" onClick={() => { setSelectedRole(account.role); setModalError(null); setRoleModalOpen(true); }} className="h-10 px-5 rounded-md border border-brand-border text-[13px] font-semibold text-brand-teal hover:border-brand-teal">Change role</button>
+              <button type="button" onClick={() => { setModalError(null); setAccessModalOpen(true); }} className={`h-10 px-5 rounded-md text-[13px] font-semibold ${account.status === 'Active' ? 'bg-[#A1372B] text-white' : 'border border-brand-border text-brand-teal'}`}>{account.status === 'Active' ? 'Lock account' : 'Unlock account'}</button>
             </div>
             <div className="mt-4">
               <p className="text-[13px] text-brand-slate">Accounts with borrowing or reservation history cannot be deleted.</p>
@@ -172,17 +186,37 @@ export const AdminAccountDetailsPage: React.FC = () => {
       }} />}
 
       {account && roleModalOpen && (
-        <AdminModal title={`Change ${account.fullName}’s role`} description={`This changes the permissions assigned to ${account.fullName} (${account.accountId}).`} confirmLabel="Save role" isSubmitting={isSubmitting} onCancel={() => setRoleModalOpen(false)} onConfirm={() => void saveUpdate(selectedRole, account.status)}>
+        <AdminModal title={`Change ${account.fullName}’s role`} description={`This changes the permissions assigned to ${account.fullName} (${account.accountId}).`} confirmLabel="Save role" isSubmitting={isSubmitting} onCancel={() => { setModalError(null); setRoleModalOpen(false); }} onConfirm={() => void saveUpdate(selectedRole, account.status)}>
           <p className="text-[13px] font-semibold">New role · Current role: {roleNames[account.role]}</p>
-          {error && <p role="alert" className="mt-3 text-[13px] text-red-800">{error}</p>}
           <div className="mt-4 grid grid-cols-3 gap-3">
             {(['student', 'staff', 'admin'] as UserRole[]).map((role) => <label key={role} className={`h-[38px] rounded-md border px-2.5 flex items-center gap-2 text-[13px] cursor-pointer ${selectedRole === role ? 'border-brand-teal bg-brand-mint font-semibold text-brand-teal' : 'border-brand-border'}`}><input type="radio" name="role" value={role} checked={selectedRole === role} onChange={() => setSelectedRole(role)} className="accent-[#17645F]" />{roleNames[role]}</label>)}
           </div>
+          {account.accountId === user?.accountId && selectedRole !== 'admin' && (
+            <p className="mt-3 rounded-md bg-[#FFF4E6] p-3 text-[12.5px] text-brand-amberText">
+              Changing your own role away from Admin will remove your access to the admin workspace immediately.
+            </p>
+          )}
+          {modalError && <p role="alert" className="mt-3 rounded-md bg-red-50 p-3 text-[13px] text-red-800">{modalError}</p>}
         </AdminModal>
       )}
 
       {account && accessModalOpen && (
-        <AdminModal title={`${account.status === 'Active' ? 'Lock' : 'Unlock'} ${account.fullName}’s account?`} description={account.status === 'Active' ? 'This blocks sign-in for this school account. Existing borrowing records remain unchanged.' : 'This restores sign-in access. Existing borrowing restrictions remain unchanged.'} confirmLabel={account.status === 'Active' ? 'Lock account' : 'Unlock account'} isSubmitting={isSubmitting} onCancel={() => setAccessModalOpen(false)} onConfirm={() => void saveUpdate(account.role, account.status === 'Active' ? 'Inactive' : 'Active')} />
+        <AdminModal
+          title={`${account.status === 'Active' ? 'Lock' : 'Unlock'} ${account.fullName}’s account?`}
+          description={account.status === 'Active' ? 'This blocks sign-in for this school account. Existing borrowing records remain unchanged.' : 'This restores sign-in access. Existing borrowing restrictions remain unchanged.'}
+          confirmLabel={account.status === 'Active' ? 'Lock account' : 'Unlock account'}
+          danger={account.status === 'Active'}
+          isSubmitting={isSubmitting}
+          onCancel={() => { setModalError(null); setAccessModalOpen(false); }}
+          onConfirm={() => void saveUpdate(account.role, account.status === 'Active' ? 'Inactive' : 'Active')}
+        >
+          {account.accountId === user?.accountId && account.status === 'Active' && (
+            <p className="rounded-md bg-[#FFF4E6] p-3 text-[12.5px] text-brand-amberText">
+              Warning: this is your own account. Locking it will end your current admin session immediately.
+            </p>
+          )}
+          {modalError && <p role="alert" className="mt-3 rounded-md bg-red-50 p-3 text-[13px] text-red-800">{modalError}</p>}
+        </AdminModal>
       )}
     </div>
   );
