@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserRound, UsersRound } from 'lucide-react';
+import { UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
 
@@ -12,15 +12,6 @@ const cards = [
     surface: 'bg-[#E8F5EF]',
     accent: 'bg-[#2E8B57] text-white',
     titleColor: 'text-[#2E8B57]',
-  },
-  {
-    title: 'My profile',
-    description: 'View your school account and end your admin session.',
-    icon: UserRound,
-    to: '/admin/profile',
-    surface: 'bg-[#EDF2FF]',
-    accent: 'bg-[#3B6EF5] text-white',
-    titleColor: 'text-[#315FF4]',
   },
 ];
 

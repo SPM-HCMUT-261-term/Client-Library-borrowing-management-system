@@ -192,7 +192,7 @@ export const StaffBookDetailPage: React.FC = () => {
   return (
     <div className="pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
-        <span>Books &amp; copies / {book.title}</span>
+        <span>Staff panel / Inventory / {book.title}</span>
         <span>{formatBorrowingToday()}</span>
       </div>
 
@@ -242,7 +242,7 @@ export const StaffBookDetailPage: React.FC = () => {
       )}
 
       {/* Book Metadata Section */}
-      <section className="mt-6 rounded-xl border border-brand-border bg-white p-6">
+      <section className="mt-6 rounded-xl border border-brand-border border-t-2 border-t-[#17645F] bg-white p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="font-serif text-[20px] font-semibold text-brand-ink">

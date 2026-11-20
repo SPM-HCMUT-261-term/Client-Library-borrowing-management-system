@@ -1,12 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle,
+  AlertTriangle,
+  ArrowDownLeft,
   ArrowLeft,
   ArrowRight,
+  BookCheck,
+  Check,
   CheckCircle2,
   Info,
   Search,
   Sparkles,
+  XCircle,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -192,34 +197,86 @@ export const StaffReturnBookPage: React.FC = () => {
     ? lookup.borrower.fullName.split(' ')[0] || lookup.borrower.fullName
     : '';
 
+  const returnStep = completedReturn ? 3 : lookup ? 2 : 1;
+
   return (
     <div className="pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
-        <span>Borrowing &amp; returns / Return a book</span>
+        <span>Staff panel / Return book</span>
         <span>{formatBorrowingToday()}</span>
       </div>
 
-      <div className="mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
-            Return a Book
-          </h1>
-          <p className="mt-1.5 text-[14px] text-brand-slate">
-            Find the physical copy and check its condition before confirming the return.
-          </p>
+      {/* Crisp Blue Counter Hero Banner */}
+      <div className="mt-3 rounded-2xl border border-[#C6D7FF] bg-[#EDF2FF] p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <span className="w-12 h-12 rounded-[12px] bg-[#3B6EF5] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <ArrowDownLeft className="w-6 h-6 stroke-[2]" />
+            </span>
+            <div>
+              <h1 className="font-serif text-[30px] leading-[38px] font-semibold text-brand-ink">
+                Return book
+              </h1>
+              <p className="mt-0.5 text-[14px] text-[#2244A8]">
+                Find the physical copy and check its condition before confirming the return.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/staff"
+            className="h-10 px-4 rounded-md border border-[#BBD0FF] bg-white inline-flex items-center gap-2 text-[13px] font-semibold text-[#315FF4] hover:border-[#315FF4] shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to home</span>
+          </Link>
         </div>
 
-        <Link
-          to="/staff"
-          className="h-10 px-4 rounded-md border border-brand-border bg-white inline-flex items-center gap-2 text-[13px] font-semibold text-brand-teal hover:border-brand-teal shrink-0"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to home</span>
-        </Link>
+        {/* 2-Step Check-in Progress Strip */}
+        <ol className="mt-5 pt-4 border-t border-[#D3E1FF] grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[12.5px]">
+          {[
+            { num: 1, label: 'Scan or find copy barcode' },
+            { num: 2, label: 'Inspect condition & confirm return' },
+          ].map((s) => {
+            const done = returnStep > s.num;
+            const active = returnStep === s.num;
+            return (
+              <li
+                key={s.num}
+                className={`rounded-lg px-3.5 py-2 flex items-center gap-2.5 border transition-colors ${
+                  active
+                    ? 'bg-white border-[#3B6EF5] text-[#254EDB] font-semibold shadow-sm'
+                    : done
+                      ? 'bg-[#E8F5EF] border-[#B7DFCC] text-[#17645F] font-semibold'
+                      : 'bg-white/60 border-[#D3E1FF] text-brand-slate'
+                }`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${
+                    done
+                      ? 'bg-[#17645F] text-white'
+                      : active
+                        ? 'bg-[#3B6EF5] text-white'
+                        : 'bg-[#D3E1FF] text-[#2244A8]'
+                  }`}
+                >
+                  {done ? <Check className="w-3 h-3 stroke-[2.5]" /> : s.num}
+                </span>
+                <span>{s.label}</span>
+              </li>
+            );
+          })}
+        </ol>
       </div>
 
       {/* Step 1: Find the Copy Card */}
-      <section className="mt-6 rounded-xl border border-brand-border bg-white p-6">
+      <section
+        className={`mt-6 rounded-xl border bg-white p-6 transition-colors ${
+          returnStep === 1
+            ? 'border-[#3B6EF5]/70 ring-1 ring-[#3B6EF5]/15'
+            : 'border-brand-border'
+        }`}
+      >
         <h2 className="font-serif text-[20px] font-semibold text-brand-ink">
           Find the copy
         </h2>
@@ -251,7 +308,7 @@ export const StaffReturnBookPage: React.FC = () => {
           <button
             type="submit"
             disabled={isFinding}
-            className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white disabled:opacity-60 shrink-0"
+            className="h-10 px-5 rounded-md bg-[#315FF4] hover:bg-[#254EDB] text-[13px] font-semibold text-white disabled:opacity-60 shrink-0"
           >
             {isFinding ? 'Finding…' : 'Find loan'}
           </button>
@@ -325,6 +382,21 @@ export const StaffReturnBookPage: React.FC = () => {
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
           <span>{returnError}</span>
         </div>
+      )}
+
+      {/* Friendly Empty State before a copy is looked up */}
+      {!lookup && !completedReturn && !lookupError && (
+        <section className="mt-6 rounded-xl border border-dashed border-[#C6D7FF] bg-white/80 p-10 text-center">
+          <span className="w-12 h-12 rounded-full bg-[#EDF2FF] text-[#315FF4] inline-flex items-center justify-center">
+            <BookCheck className="w-6 h-6" />
+          </span>
+          <h3 className="mt-3 font-serif text-[20px] font-semibold text-brand-ink">
+            Ready to check in a book
+          </h3>
+          <p className="mt-1 text-[13.5px] text-brand-slate max-w-md mx-auto">
+            Scan or type the physical copy barcode above to load its active loan, inspect the book&rsquo;s condition, and return it to inventory.
+          </p>
+        </section>
       )}
 
       {/* Completed Return Receipt State */}
@@ -569,27 +641,53 @@ export const StaffReturnBookPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {CONDITION_OPTIONS.map((opt) => {
                   const selected = condition === opt.value;
+                  const tone =
+                    opt.value === 'Good'
+                      ? {
+                          selectedCard: 'border-[#17645F] bg-[#E8F5EF]/70 ring-1 ring-[#17645F]/20',
+                          iconWrap: 'bg-[#E8F5EF] text-[#17645F]',
+                          Icon: CheckCircle2,
+                        }
+                      : opt.value === 'Damaged'
+                        ? {
+                            selectedCard: 'border-[#E97700] bg-[#FFF4E6]/80 ring-1 ring-[#E97700]/20',
+                            iconWrap: 'bg-[#FFF4E6] text-[#D96C00]',
+                            Icon: AlertTriangle,
+                          }
+                        : {
+                            selectedCard: 'border-[#A1372B] bg-red-50/80 ring-1 ring-[#A1372B]/20',
+                            iconWrap: 'bg-red-50 text-[#A1372B]',
+                            Icon: XCircle,
+                          };
+                  const CondIcon = tone.Icon;
                   return (
                     <label
                       key={opt.value}
-                      className={`rounded-lg border p-3.5 cursor-pointer flex flex-col gap-1 transition-colors ${
+                      className={`rounded-xl border p-4 cursor-pointer flex flex-col gap-2 transition-all ${
                         selected
-                          ? 'border-brand-teal bg-brand-mint/40'
-                          : 'border-brand-border hover:border-brand-teal/50'
+                          ? tone.selectedCard
+                          : 'border-brand-border bg-white hover:border-brand-slate/50'
                       }`}
                     >
-                      <span className="flex items-center gap-2 text-[13.5px] font-semibold text-brand-ink">
-                        <input
-                          type="radio"
-                          name="returnCondition"
-                          value={opt.value}
-                          checked={selected}
-                          onChange={() => setCondition(opt.value)}
-                          className="accent-[#17645F]"
-                        />
-                        <span>{opt.label}</span>
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 text-[13.5px] font-semibold text-brand-ink">
+                          <input
+                            type="radio"
+                            name="returnCondition"
+                            value={opt.value}
+                            checked={selected}
+                            onChange={() => setCondition(opt.value)}
+                            className="accent-[#315FF4]"
+                          />
+                          <span>{opt.label}</span>
+                        </span>
+                        <span
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${tone.iconWrap}`}
+                        >
+                          <CondIcon className="w-4 h-4" />
+                        </span>
                       </span>
-                      <span className="text-[12px] text-brand-slate pl-5">
+                      <span className="text-[12px] text-brand-slate leading-relaxed">
                         {opt.helper}
                       </span>
                     </label>
@@ -719,7 +817,7 @@ export const StaffReturnBookPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 rounded-md bg-brand-teal hover:bg-brand-tealHover text-white font-semibold text-[13px] disabled:opacity-60 transition-colors"
+                className="w-full h-11 rounded-md bg-[#315FF4] hover:bg-[#254EDB] text-white font-semibold text-[13px] disabled:opacity-60 transition-colors"
               >
                 {isSubmitting ? 'Confirming return…' : 'Confirm return'}
               </button>

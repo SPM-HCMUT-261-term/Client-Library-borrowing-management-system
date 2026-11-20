@@ -1,18 +1,55 @@
 import React from 'react';
-import { BookOpen, LogOut } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { UserMenuDropdown } from '../UserMenuDropdown';
 
 interface StaffLayoutProps {
   children: React.ReactNode;
 }
 
-const navClass = ({ isActive }: { isActive: boolean }) =>
-  `relative h-full flex items-center text-[14px] transition-colors ${
-    isActive
-      ? 'font-semibold text-brand-teal'
-      : 'font-normal text-brand-slate hover:text-brand-ink'
-  }`;
+const staffNavItems = [
+  {
+    to: '/staff/issue',
+    end: false,
+    label: 'Lend book',
+    dot: 'bg-[#E97700]',
+    activeClass:
+      'bg-[#FFF4E6] border-[#F5C78E] text-[#D96C00] font-semibold shadow-sm',
+    inactiveClass:
+      'bg-brand-canvas/60 border-brand-border text-brand-slate hover:bg-[#FFF4E6]/80 hover:border-[#F5D0A9] hover:text-[#D96C00]',
+  },
+  {
+    to: '/staff/return',
+    end: false,
+    label: 'Return book',
+    dot: 'bg-[#3B6EF5]',
+    activeClass:
+      'bg-[#EDF2FF] border-[#BBD0FF] text-[#315FF4] font-semibold shadow-sm',
+    inactiveClass:
+      'bg-brand-canvas/60 border-brand-border text-brand-slate hover:bg-[#EDF2FF]/80 hover:border-[#C6D7FF] hover:text-[#315FF4]',
+  },
+  {
+    to: '/staff/books',
+    end: false,
+    label: 'Inventory',
+    dot: 'bg-[#17645F]',
+    activeClass:
+      'bg-[#E8F5EF] border-[#A7D7C5] text-[#17645F] font-semibold shadow-sm',
+    inactiveClass:
+      'bg-brand-canvas/60 border-brand-border text-brand-slate hover:bg-[#E8F5EF]/80 hover:border-[#B7DFCC] hover:text-[#17645F]',
+  },
+  {
+    to: '/staff/loans',
+    end: false,
+    label: 'Records',
+    dot: 'bg-[#7C3AED]',
+    activeClass:
+      'bg-[#F2EEFF] border-[#D4C2FF] text-[#7C3AED] font-semibold shadow-sm',
+    inactiveClass:
+      'bg-brand-canvas/60 border-brand-border text-brand-slate hover:bg-[#F2EEFF]/80 hover:border-[#DDD0FF] hover:text-[#7C3AED]',
+  },
+] as const;
 
 export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
@@ -42,47 +79,30 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-8 h-full">
-              <NavLink to="/staff" end className={navClass}>
-                {({ isActive }) => (
-                  <>
-                    <span>Home</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-teal" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-              <NavLink to="/staff/issue" className={navClass}>
-                {({ isActive }) => (
-                  <>
-                    <span>Borrowing &amp; returns</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-teal" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-              <NavLink to="/staff/loans" className={navClass}>
-                {({ isActive }) => (
-                  <>
-                    <span>Loan records</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-teal" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-              <NavLink to="/staff/books" className={navClass}>
-                {({ isActive }) => (
-                  <>
-                    <span>Books &amp; copies</span>
-                    {isActive && (
-                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-teal" />
-                    )}
-                  </>
-                )}
-              </NavLink>
+            <nav className="hidden md:flex items-center gap-2">
+              {staffNavItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `h-9 px-3.5 rounded-lg border inline-flex items-center gap-2 text-[13.5px] font-medium transition-all whitespace-nowrap ${
+                      isActive ? item.activeClass : item.inactiveClass
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 transition-opacity ${
+                          item.dot
+                        } ${isActive ? 'opacity-100' : 'opacity-70'}`}
+                      />
+                      <span>{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
             </nav>
           </div>
 
@@ -91,28 +111,12 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
               Staff workspace
             </span>
             {user && (
-              <div className="hidden sm:flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-lg border border-brand-border bg-brand-canvas/60">
-                <span className="w-7 h-7 rounded-full bg-brand-mint text-brand-teal text-[11px] font-bold flex items-center justify-center">
-                  {user.initials}
-                </span>
-                <span className="text-[12px] leading-tight">
-                  <span className="block font-semibold text-brand-ink">
-                    {user.fullName}
-                  </span>
-                  <span className="block text-[11px] text-brand-slate">
-                    {user.accountId}
-                  </span>
-                </span>
-              </div>
+              <UserMenuDropdown
+                user={user}
+                profileLink={{ to: '/staff/profile', label: 'My profile' }}
+                onLogout={handleLogout}
+              />
             )}
-            <button
-              type="button"
-              onClick={() => void handleLogout()}
-              className="h-10 px-3.5 rounded-md border border-brand-border bg-white inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-teal hover:border-brand-teal transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign out</span>
-            </button>
           </div>
         </div>
       </header>

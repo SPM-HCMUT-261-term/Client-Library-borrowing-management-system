@@ -468,6 +468,13 @@ export const LoginPage: React.FC = () => {
             >
               Staff · STF001
             </button>
+            <button
+              type="button"
+              onClick={() => handleQuickFill('ADM001', 'admin')}
+              className="px-3 py-1.5 rounded-md bg-[#EDF2FF] text-[#315FF4] font-semibold hover:bg-[#315FF4] hover:text-white transition-colors"
+            >
+              Admin · ADM001
+            </button>
           </div>
         </div>
       )}

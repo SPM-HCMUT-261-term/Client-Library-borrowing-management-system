@@ -19,6 +19,7 @@ import { BookCatalogPage } from './pages/BookCatalogPage';
 import { BookDetailPage } from './pages/BookDetailPage';
 import { HoldConfirmedPage } from './pages/HoldConfirmedPage';
 import { MyBorrowingPage } from './pages/MyBorrowingPage';
+import { StudentProfilePage } from './pages/StudentProfilePage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminHomePage } from './pages/admin/AdminHomePage';
 import { AdminAccountsPage } from './pages/admin/AdminAccountsPage';
@@ -31,6 +32,7 @@ import { StaffBookDetailPage } from './pages/staff/StaffBookDetailPage';
 import { StaffIssueBooksPage } from './pages/staff/StaffIssueBooksPage';
 import { StaffReturnBookPage } from './pages/staff/StaffReturnBookPage';
 import { StaffLoansPage } from './pages/staff/StaffLoansPage';
+import { StaffProfilePage } from './pages/staff/StaffProfilePage';
 
 const AppRoutes: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
@@ -87,6 +89,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/staff/loans" element={<StaffLoansPage />} />
           <Route path="/staff/books" element={<StaffInventoryPage />} />
           <Route path="/staff/books/:id" element={<StaffBookDetailPage />} />
+          <Route path="/staff/profile" element={<StaffProfilePage />} />
           <Route path="/staff/*" element={<Navigate to="/staff" replace />} />
         </Routes>
       </StaffLayout>
@@ -134,6 +137,12 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/my-borrowing"
           element={user ? <MyBorrowingPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profile"
+          element={
+            user ? <StudentProfilePage /> : <Navigate to="/login" replace />
+          }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

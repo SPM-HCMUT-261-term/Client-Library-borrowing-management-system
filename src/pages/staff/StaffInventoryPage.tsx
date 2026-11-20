@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { ArrowLeft, BookCopy, Plus, Search } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getBooksApi } from '../../api/endpoints';
 import { ApiClientError } from '../../api/client';
@@ -122,28 +122,32 @@ export const StaffInventoryPage: React.FC = () => {
   return (
     <div className="pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
-        <span>Books &amp; copies / Title inventory</span>
+        <span>Staff panel / Inventory</span>
         <span>{formatBorrowingToday()}</span>
       </div>
 
-      <div className="mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
-            Manage Books
-          </h1>
-          <p className="mt-1.5 text-[14px] text-brand-slate">
-            Manage title information and individual physical copies. Stock is calculated from copy states.
-          </p>
+      <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-4">
+          <span className="w-11 h-11 rounded-[11px] bg-[#17645F] text-white flex items-center justify-center shrink-0">
+            <BookCopy className="w-5 h-5 stroke-[1.8]" />
+          </span>
+          <div>
+            <h1 className="font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
+              Inventory
+            </h1>
+            <p className="mt-1 text-[14px] text-brand-slate">
+              Manage title information and individual physical copies. Stock is calculated from copy states.
+            </p>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setAddBookOpen(true)}
-          className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white inline-flex items-center gap-2 shrink-0"
+        <Link
+          to="/staff"
+          className="h-10 px-4 rounded-md border border-brand-border bg-white inline-flex items-center gap-2 text-[13px] font-semibold text-[#17645F] hover:border-[#17645F] shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add book</span>
-        </button>
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to home</span>
+        </Link>
       </div>
 
       {bannerMessage && (
@@ -162,20 +166,29 @@ export const StaffInventoryPage: React.FC = () => {
         </div>
       )}
 
-      <section className="mt-6 rounded-xl border border-brand-border bg-white p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <section className="mt-6 rounded-xl border border-brand-border border-t-2 border-t-[#17645F] bg-white p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="font-serif text-[20px] font-semibold text-brand-ink">
               Title inventory
             </h2>
             <p className="mt-0.5 text-[13px] text-brand-slate">
-              Search includes title, author, ISBN, keywords and category.
+              Search includes title, author, ISBN, keywords and category. ·{' '}
+              <span className="font-medium text-brand-ink">
+                {pagination.totalItems}{' '}
+                {pagination.totalItems === 1 ? 'title' : 'titles'}
+              </span>
             </p>
           </div>
-          <span className="text-[12px] font-medium text-brand-slate">
-            {pagination.totalItems}{' '}
-            {pagination.totalItems === 1 ? 'title' : 'titles'} · All matching titles shown
-          </span>
+
+          <button
+            type="button"
+            onClick={() => setAddBookOpen(true)}
+            className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white inline-flex items-center gap-2 shrink-0 self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add book</span>
+          </button>
         </div>
 
         <form

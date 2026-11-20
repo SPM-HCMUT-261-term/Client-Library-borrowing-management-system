@@ -3,7 +3,10 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   BookmarkCheck,
+  BookOpen,
+  Check,
   CheckCircle2,
   Info,
   Search,
@@ -562,29 +565,77 @@ export const StaffIssueBooksPage: React.FC = () => {
     .filter((c) => c.associatedHold)
     .map((c) => c.associatedHold!.holdCode);
 
+  const currentStep = !studentProfile ? 1 : selectedCopies.length === 0 ? 2 : 3;
+
   return (
     <div className="pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
-        <span>Borrowing &amp; returns / Issue books</span>
+        <span>Staff panel / Lend book</span>
         <span>{formatBorrowingToday()}</span>
       </div>
 
-      <div className="mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
-            Loan a Book
-          </h1>
-          <p className="mt-1.5 text-[14px] text-brand-slate">
-            Find the student, add physical copies, then confirm all selected books together.
-          </p>
+      {/* Warm Amber Counter Hero Banner */}
+      <div className="mt-3 rounded-2xl border border-[#F5D0A9] bg-[#FFF4E6] p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <span className="w-12 h-12 rounded-[12px] bg-[#E97700] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <ArrowUpRight className="w-6 h-6 stroke-[2]" />
+            </span>
+            <div>
+              <h1 className="font-serif text-[30px] leading-[38px] font-semibold text-brand-ink">
+                Lend book
+              </h1>
+              <p className="mt-0.5 text-[14px] text-[#8A4600]">
+                Find the student, add physical copies, then confirm all selected books together.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/staff"
+            className="h-10 px-4 rounded-md border border-[#E9C298] bg-white inline-flex items-center gap-2 text-[13px] font-semibold text-[#B85A00] hover:border-[#D96C00] shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to home</span>
+          </Link>
         </div>
 
-        <Link
-          to="/staff"
-          className="h-10 px-4 rounded-md border border-brand-border bg-white inline-flex items-center justify-center text-[13px] font-semibold text-brand-teal hover:border-brand-teal shrink-0"
-        >
-          Cancel
-        </Link>
+        {/* 3-Step Counter Progress Strip */}
+        <ol className="mt-5 pt-4 border-t border-[#F2D5B3] grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[12.5px]">
+          {[
+            { num: 1, label: 'Find student' },
+            { num: 2, label: 'Scan or add copies' },
+            { num: 3, label: 'Confirm & issue' },
+          ].map((s) => {
+            const done = currentStep > s.num;
+            const active = currentStep === s.num;
+            return (
+              <li
+                key={s.num}
+                className={`rounded-lg px-3.5 py-2 flex items-center gap-2.5 border transition-colors ${
+                  active
+                    ? 'bg-white border-[#E97700] text-[#B85A00] font-semibold shadow-sm'
+                    : done
+                      ? 'bg-[#E8F5EF] border-[#B7DFCC] text-[#17645F] font-semibold'
+                      : 'bg-white/60 border-[#F2D5B3] text-brand-slate'
+                }`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${
+                    done
+                      ? 'bg-[#17645F] text-white'
+                      : active
+                        ? 'bg-[#E97700] text-white'
+                        : 'bg-[#F2D5B3] text-[#8A4600]'
+                  }`}
+                >
+                  {done ? <Check className="w-3 h-3 stroke-[2.5]" /> : s.num}
+                </span>
+                <span>{s.label}</span>
+              </li>
+            );
+          })}
+        </ol>
       </div>
 
       {issueError && (
@@ -601,7 +652,13 @@ export const StaffIssueBooksPage: React.FC = () => {
         {/* Left Column: Step 1 (Student) & Step 2 (Add Physical Copies) */}
         <div className="space-y-6">
           {/* Step 1: Student Lookup Card */}
-          <section className="rounded-xl border border-brand-border bg-white p-6">
+          <section
+            className={`rounded-xl border bg-white p-6 transition-colors ${
+              currentStep === 1
+                ? 'border-[#E97700]/70 ring-1 ring-[#E97700]/15'
+                : 'border-brand-border'
+            }`}
+          >
             <h2 className="font-serif text-[20px] font-semibold text-brand-ink">
               Student
             </h2>
@@ -635,7 +692,7 @@ export const StaffIssueBooksPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isFindingStudent}
-                className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white disabled:opacity-60 shrink-0"
+                className="h-10 px-5 rounded-md bg-[#D96C00] hover:bg-[#B85A00] text-[13px] font-semibold text-white disabled:opacity-60 shrink-0 transition-colors"
               >
                 {isFindingStudent ? 'Finding…' : 'Find student'}
               </button>
@@ -771,7 +828,13 @@ export const StaffIssueBooksPage: React.FC = () => {
           </section>
 
           {/* Step 2: Add Physical Copies Card */}
-          <section className="rounded-xl border border-brand-border bg-white p-6">
+          <section
+            className={`rounded-xl border bg-white p-6 transition-colors ${
+              currentStep === 2
+                ? 'border-[#E97700]/70 ring-1 ring-[#E97700]/15'
+                : 'border-brand-border'
+            }`}
+          >
             <h2 className="font-serif text-[20px] font-semibold text-brand-ink">
               Add physical copies
             </h2>
@@ -809,7 +872,7 @@ export const StaffIssueBooksPage: React.FC = () => {
                 disabled={
                   !studentProfile || !elig?.isEligible || isCheckingCopy
                 }
-                className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white disabled:opacity-60 shrink-0"
+                className="h-10 px-5 rounded-md bg-[#D96C00] hover:bg-[#B85A00] text-[13px] font-semibold text-white disabled:opacity-60 shrink-0 transition-colors"
               >
                 {isCheckingCopy ? 'Checking…' : 'Find copy'}
               </button>
@@ -916,7 +979,17 @@ export const StaffIssueBooksPage: React.FC = () => {
                         colSpan={4}
                         className="py-10 text-center text-brand-slate"
                       >
-                        No physical copies added yet. Enter a copy barcode above to check availability and add it to this transaction.
+                        <div className="inline-flex flex-col items-center gap-2">
+                          <span className="w-10 h-10 rounded-full bg-[#FFF4E6] text-[#D96C00] flex items-center justify-center">
+                            <BookOpen className="w-5 h-5" />
+                          </span>
+                          <span className="font-medium text-brand-ink">
+                            No physical copies added yet
+                          </span>
+                          <span className="text-[12.5px] max-w-sm">
+                            Enter or scan a copy barcode above to check availability and add it to this checkout.
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -1055,11 +1128,63 @@ export const StaffIssueBooksPage: React.FC = () => {
               </div>
             )}
 
+            {/* 5-Slot Visual Loan Quota Meter */}
+            {elig && (
+              <div className="rounded-lg border border-brand-border bg-brand-canvas/60 p-3.5 space-y-2">
+                <div className="flex items-center justify-between text-[11.5px] font-semibold">
+                  <span className="text-brand-ink">Loan quota preview</span>
+                  <span className="text-[#B85A00]">
+                    {afterIssueCount} / {maxLimit} books
+                  </span>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {Array.from({ length: maxLimit }, (_, idx) => {
+                    const isExisting = idx < elig.activeLoansCount;
+                    const isNew =
+                      idx >= elig.activeLoansCount && idx < afterIssueCount;
+                    return (
+                      <div
+                        key={idx}
+                        title={
+                          isExisting
+                            ? 'Existing active loan'
+                            : isNew
+                              ? 'Selected for checkout'
+                              : 'Available slot'
+                        }
+                        className={`h-2.5 rounded-full transition-colors ${
+                          isExisting
+                            ? 'bg-brand-teal'
+                            : isNew
+                              ? 'bg-[#E97700]'
+                              : 'border border-dashed border-brand-border bg-white'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-brand-slate">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-brand-teal" />
+                    Existing ({elig.activeLoansCount})
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#E97700]" />
+                    This checkout ({selectedCopies.length})
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full border border-dashed border-brand-slate" />
+                    Remaining ({spaceAfterIssue})
+                  </span>
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               disabled={!canConfirmTransaction || isIssuing}
               onClick={() => setConfirmModalOpen(true)}
-              className="w-full h-11 rounded-md bg-brand-teal hover:bg-brand-tealHover text-white font-semibold text-[13px] disabled:opacity-50 transition-colors"
+              className="w-full h-11 rounded-md bg-[#D96C00] hover:bg-[#B85A00] text-white font-semibold text-[13px] disabled:opacity-50 transition-colors"
             >
               {selectedCopies.length > 0
                 ? `Confirm issue of ${selectedCopies.length} ${
@@ -1218,7 +1343,7 @@ export const StaffIssueBooksPage: React.FC = () => {
                 type="button"
                 disabled={isIssuing || selectedCopies.length === 0}
                 onClick={() => void handleConfirmIssue()}
-                className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white disabled:opacity-60"
+                className="h-10 px-5 rounded-md bg-[#D96C00] hover:bg-[#B85A00] text-[13px] font-semibold text-white disabled:opacity-60"
               >
                 {isIssuing
                   ? 'Issuing…'

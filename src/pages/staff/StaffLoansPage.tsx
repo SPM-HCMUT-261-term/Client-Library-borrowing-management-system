@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle,
-  ArrowDownLeft,
+  ArrowLeft,
   ArrowUpDown,
-  ArrowUpRight,
   BookmarkX,
+  Check,
+  Clock3,
+  Copy,
   Search,
   Sparkles,
 } from 'lucide-react';
@@ -15,7 +17,6 @@ import {
   getStaffLoanRecordsApi,
 } from '../../api/endpoints';
 import { ApiClientError } from '../../api/client';
-import { BookCoverGraphic } from '../../components/BookCoverGraphic';
 import { useToast } from '../../context/ToastContext';
 import {
   PaginationInfo,
@@ -71,7 +72,19 @@ export const StaffLoansPage: React.FC = () => {
   const [releasingHoldCode, setReleasingHoldCode] = useState<string | null>(
     null,
   );
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [resetTick, setResetTick] = useState(0);
+
+  const handleCopyCode = (code: string) => {
+    if (navigator.clipboard?.writeText) {
+      void navigator.clipboard.writeText(code);
+    }
+    setCopiedId(code);
+    showToast(`Copied ${code}`, 'success');
+    window.setTimeout(() => {
+      setCopiedId((prev) => (prev === code ? null : prev));
+    }, 1500);
+  };
 
   const loadRecords = useCallback(async () => {
     setIsLoading(true);
@@ -199,7 +212,7 @@ export const StaffLoansPage: React.FC = () => {
     <div className="pt-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
         <span>
-          Counter /{' '}
+          Staff panel / Records /{' '}
           {tab === 'active'
             ? 'Active loans'
             : tab === 'returned'
@@ -209,35 +222,31 @@ export const StaffLoansPage: React.FC = () => {
         <span>{formatBorrowingToday()}</span>
       </div>
 
-      <div className="mt-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
-            Loan Records
-          </h1>
-          <p className="mt-1.5 text-[14px] text-brand-slate">
-            Find a loan, issue several books or record a return at the library counter.
-          </p>
+      <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-4">
+          <span className="w-11 h-11 rounded-[11px] bg-[#7C3AED] text-white flex items-center justify-center shrink-0">
+            <Clock3 className="w-5 h-5 stroke-[1.8]" />
+          </span>
+          <div>
+            <h1 className="font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
+              Records
+            </h1>
+            <p className="mt-1 text-[14px] text-brand-slate">
+              View active loans, returned history, and active holds across the library.
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <Link
-            to="/staff/return"
-            className="h-10 px-4 rounded-md border border-brand-border bg-white inline-flex items-center gap-2 text-[13px] font-semibold text-brand-teal hover:border-brand-teal"
-          >
-            <ArrowDownLeft className="w-4 h-4" />
-            <span>Return a book</span>
-          </Link>
-          <Link
-            to="/staff/issue"
-            className="h-10 px-4 rounded-md bg-brand-teal hover:bg-brand-tealHover inline-flex items-center gap-2 text-[13px] font-semibold text-white"
-          >
-            <ArrowUpRight className="w-4 h-4" />
-            <span>Issue books</span>
-          </Link>
-        </div>
+        <Link
+          to="/staff"
+          className="h-10 px-4 rounded-md border border-brand-border bg-white inline-flex items-center gap-2 text-[13px] font-semibold text-[#7C3AED] hover:border-[#7C3AED] shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to home</span>
+        </Link>
       </div>
 
-      <section className="mt-6 rounded-xl border border-brand-border bg-white p-6">
+      <section className="mt-6 rounded-xl border border-brand-border border-t-2 border-t-[#7C3AED] bg-white p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="font-serif text-[20px] font-semibold text-brand-ink">
@@ -255,7 +264,7 @@ export const StaffLoansPage: React.FC = () => {
               onClick={() => handleSwitchTab('active')}
               className={`h-8 px-3.5 rounded-md text-[13px] font-semibold transition-colors ${
                 tab === 'active'
-                  ? 'bg-white text-brand-teal shadow-sm'
+                  ? 'bg-white text-[#7C3AED] shadow-sm'
                   : 'text-brand-slate hover:text-brand-ink'
               }`}
             >
@@ -266,7 +275,7 @@ export const StaffLoansPage: React.FC = () => {
               onClick={() => handleSwitchTab('returned')}
               className={`h-8 px-3.5 rounded-md text-[13px] font-semibold transition-colors ${
                 tab === 'returned'
-                  ? 'bg-white text-brand-teal shadow-sm'
+                  ? 'bg-white text-[#7C3AED] shadow-sm'
                   : 'text-brand-slate hover:text-brand-ink'
               }`}
             >
@@ -277,7 +286,7 @@ export const StaffLoansPage: React.FC = () => {
               onClick={() => handleSwitchTab('holds')}
               className={`h-8 px-3.5 rounded-md text-[13px] font-semibold transition-colors ${
                 tab === 'holds'
-                  ? 'bg-white text-brand-teal shadow-sm'
+                  ? 'bg-white text-[#7C3AED] shadow-sm'
                   : 'text-brand-slate hover:text-brand-ink'
               }`}
             >
@@ -329,7 +338,7 @@ export const StaffLoansPage: React.FC = () => {
 
           <button
             type="submit"
-            className="h-10 px-5 rounded-md bg-brand-teal hover:bg-brand-tealHover text-[13px] font-semibold text-white"
+            className="h-10 px-5 rounded-md bg-[#7C3AED] hover:bg-[#6D28D9] text-[13px] font-semibold text-white transition-colors"
           >
             Search
           </button>
@@ -399,7 +408,7 @@ export const StaffLoansPage: React.FC = () => {
               onClick={() =>
                 setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
               }
-              className="inline-flex items-center gap-1 font-medium text-brand-teal hover:underline"
+              className="inline-flex items-center gap-1 font-medium text-[#7C3AED] hover:underline"
             >
               <ArrowUpDown className="w-3.5 h-3.5" />
               <span>
@@ -429,7 +438,8 @@ export const StaffLoansPage: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-brand-border text-[11px] font-semibold tracking-wider text-brand-slate uppercase">
-                  <th className="py-3 pr-4">Book / Copy</th>
+                  <th className="py-3 pl-3 pr-4">Hold ID</th>
+                  <th className="py-3 px-4">Book</th>
                   <th className="py-3 px-4">Student</th>
                   <th className="py-3 px-4">Requested</th>
                   <th className="py-3 px-4">Collect By</th>
@@ -441,7 +451,7 @@ export const StaffLoansPage: React.FC = () => {
                 {isLoading ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="py-14 text-center text-brand-slate"
                     >
                       Loading active holds…
@@ -450,7 +460,7 @@ export const StaffLoansPage: React.FC = () => {
                 ) : holdItems.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="py-14 text-center text-brand-slate"
                     >
                       No active hold requests found.
@@ -460,29 +470,52 @@ export const StaffLoansPage: React.FC = () => {
                   holdItems.map((hold) => {
                     const deadline = formatCollectionDeadline(hold.collectBy);
                     return (
-                      <tr key={hold._id} className="hover:bg-brand-canvas/40">
-                        <td className="py-3.5 pr-4">
-                          <div className="flex items-center gap-3.5">
-                            <BookCoverGraphic
-                              title={hold.book.title}
-                              author={hold.book.author}
-                              coverKey={hold.book._id}
-                              size="xs"
-                            />
-                            <div>
-                              <p className="font-semibold text-[14px] text-brand-ink">
-                                {hold.book.title}
-                              </p>
-                              <p className="text-[12px] text-brand-slate">
-                                {hold.book.author} ·{' '}
-                                <span className="font-mono font-semibold text-brand-ink">
-                                  {hold.copy.copyCode} · {hold.holdCode}
-                                </span>
-                              </p>
-                            </div>
+                      <tr
+                        key={hold._id}
+                        className={`group transition-colors ${
+                          hold.isPastDeadline
+                            ? 'bg-red-50/35 hover:bg-red-50/60'
+                            : 'hover:bg-brand-canvas/40'
+                        }`}
+                      >
+                        <td
+                          className={`py-3.5 pl-3 pr-4 align-top whitespace-nowrap border-l-[3px] ${
+                            hold.isPastDeadline
+                              ? 'border-l-[#A1372B]'
+                              : 'border-l-transparent'
+                          }`}
+                        >
+                          <div className="inline-flex items-center gap-1.5">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md border border-[#C6D7FF] bg-[#EDF2FF] font-mono text-[12px] font-semibold text-[#254EDB]">
+                              {hold.holdCode}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCode(hold.holdCode)}
+                              title={`Copy ${hold.holdCode}`}
+                              aria-label={`Copy hold ID ${hold.holdCode}`}
+                              className="p-1 rounded text-brand-slate opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-brand-canvas hover:text-brand-ink transition-all"
+                            >
+                              {copiedId === hold.holdCode ? (
+                                <Check className="w-3.5 h-3.5 text-[#17645F]" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
                           </div>
+                          <p className="mt-1 font-mono text-[11.5px] text-brand-slate">
+                            Copy {hold.copy.copyCode}
+                          </p>
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-4 align-top">
+                          <p className="font-semibold text-[14px] text-brand-ink leading-snug">
+                            {hold.book.title}
+                          </p>
+                          <p className="mt-0.5 text-[12px] text-brand-slate">
+                            {hold.book.author}
+                          </p>
+                        </td>
+                        <td className="py-3.5 px-4 align-top">
                           <p className="font-semibold text-brand-ink">
                             {hold.student.fullName}
                           </p>
@@ -493,11 +526,17 @@ export const StaffLoansPage: React.FC = () => {
                               : ''}
                           </p>
                         </td>
-                        <td className="py-3.5 px-4 text-brand-slate">
+                        <td className="py-3.5 px-4 align-top text-brand-slate tabular-nums whitespace-nowrap">
                           {formatShortBorrowingDate(hold.requestedAt)}
                         </td>
-                        <td className="py-3.5 px-4">
-                          <p className="font-semibold text-brand-ink">
+                        <td className="py-3.5 px-4 align-top tabular-nums whitespace-nowrap">
+                          <p
+                            className={`font-semibold ${
+                              hold.isPastDeadline
+                                ? 'text-[#A1372B]'
+                                : 'text-brand-ink'
+                            }`}
+                          >
                             {deadline.date}
                           </p>
                           {deadline.time && (
@@ -506,7 +545,7 @@ export const StaffLoansPage: React.FC = () => {
                             </p>
                           )}
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-4 align-top whitespace-nowrap">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${
                               hold.isPastDeadline
@@ -519,7 +558,7 @@ export const StaffLoansPage: React.FC = () => {
                               : 'Ready at counter'}
                           </span>
                         </td>
-                        <td className="py-3.5 pl-4 text-right">
+                        <td className="py-3.5 pl-4 align-top text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-2">
                             <Link
                               to={`/staff/issue?studentAccountId=${encodeURIComponent(
@@ -527,7 +566,7 @@ export const StaffLoansPage: React.FC = () => {
                               )}&copyCode=${encodeURIComponent(
                                 hold.copy.copyCode,
                               )}`}
-                              className="h-8 px-3 rounded-md border border-brand-border bg-white inline-flex items-center text-[12px] font-semibold text-brand-teal hover:border-brand-teal"
+                              className="h-8 px-3 rounded-md border border-[#F5D0A9] bg-[#FFF4E6] hover:bg-[#FFE8CC] inline-flex items-center text-[12px] font-semibold text-[#D96C00] transition-colors"
                             >
                               Issue
                             </Link>
@@ -537,7 +576,7 @@ export const StaffLoansPage: React.FC = () => {
                               onClick={() =>
                                 void handleReleaseHold(hold.holdCode)
                               }
-                              className="h-8 px-3 rounded-md border border-brand-border bg-white inline-flex items-center gap-1 text-[12px] font-semibold text-[#A1372B] hover:bg-red-50 disabled:opacity-50"
+                              className="h-8 px-3 rounded-md border border-red-200 bg-white inline-flex items-center gap-1 text-[12px] font-semibold text-[#A1372B] hover:bg-red-50 disabled:opacity-50 transition-colors"
                             >
                               <BookmarkX className="w-3.5 h-3.5" />
                               <span>
@@ -560,7 +599,8 @@ export const StaffLoansPage: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-brand-border text-[11px] font-semibold tracking-wider text-brand-slate uppercase">
-                  <th className="py-3 pr-4">Book / Copy</th>
+                  <th className="py-3 pl-3 pr-4">Borrow ID</th>
+                  <th className="py-3 px-4">Book</th>
                   <th className="py-3 px-4">Borrower</th>
                   <th className="py-3 px-4">Borrowed</th>
                   <th className="py-3 px-4">
@@ -574,7 +614,7 @@ export const StaffLoansPage: React.FC = () => {
                 {isLoading ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="py-14 text-center text-brand-slate"
                     >
                       Loading loan records…
@@ -583,90 +623,130 @@ export const StaffLoansPage: React.FC = () => {
                 ) : loanItems.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="py-14 text-center text-brand-slate"
                     >
                       No matching loan records found.
                     </td>
                   </tr>
                 ) : (
-                  loanItems.map((item) => (
-                    <tr key={item._id} className="hover:bg-brand-canvas/40">
-                      <td className="py-3.5 pr-4">
-                        <div className="flex items-center gap-3.5">
-                          <BookCoverGraphic
-                            title={item.book.title}
-                            author={item.book.author}
-                            coverKey={item.book._id}
-                            size="xs"
-                          />
-                          <div>
-                            <p className="font-semibold text-[14px] text-brand-ink">
-                              {item.book.title}
-                            </p>
-                            <p className="text-[12px] text-brand-slate">
-                              {item.book.author} ·{' '}
-                              <span className="font-mono font-semibold text-brand-ink">
-                                {item.copy.copyCode} · {item.borrowCode}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <p className="font-semibold text-brand-ink">
-                          {item.borrower.fullName}
-                        </p>
-                        <p className="text-[12px] font-mono text-brand-slate">
-                          {item.borrower.accountId}
-                        </p>
-                      </td>
-                      <td className="py-3.5 px-4 text-brand-slate">
-                        {formatShortBorrowingDate(item.borrowedAt)}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <p
-                          className={`font-semibold ${
-                            item.isOverdue
-                              ? 'text-[#A1372B]'
-                              : 'text-brand-ink'
+                  loanItems.map((item) => {
+                    const isUrgent =
+                      item.status === 'Active' && item.isOverdue;
+                    return (
+                      <tr
+                        key={item._id}
+                        className={`group transition-colors ${
+                          isUrgent
+                            ? 'bg-red-50/35 hover:bg-red-50/60'
+                            : 'hover:bg-brand-canvas/40'
+                        }`}
+                      >
+                        <td
+                          className={`py-3.5 pl-3 pr-4 align-top whitespace-nowrap border-l-[3px] ${
+                            isUrgent
+                              ? 'border-l-[#A1372B]'
+                              : 'border-l-transparent'
                           }`}
                         >
-                          {formatShortBorrowingDate(item.dueDate)}
-                        </p>
-                        {item.status === 'Returned' && item.returnedAt && (
-                          <p className="text-[12px] text-brand-teal">
-                            Returned {formatShortBorrowingDate(item.returnedAt)}
+                          <div className="inline-flex items-center gap-1.5">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md border border-[#DDD0FF] bg-[#F2EEFF] font-mono text-[12px] font-semibold text-[#6D28D9]">
+                              {item.borrowCode}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCode(item.borrowCode)}
+                              title={`Copy ${item.borrowCode}`}
+                              aria-label={`Copy borrow ID ${item.borrowCode}`}
+                              className="p-1 rounded text-brand-slate opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-brand-canvas hover:text-brand-ink transition-all"
+                            >
+                              {copiedId === item.borrowCode ? (
+                                <Check className="w-3.5 h-3.5 text-[#17645F]" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                          <p className="mt-1 font-mono text-[11.5px] text-brand-slate">
+                            Copy {item.copy.copyCode}
                           </p>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${statusBadgeClass(
-                            item,
-                          )}`}
-                        >
-                          {item.statusBadge}
-                        </span>
-                      </td>
-                      <td className="py-3.5 pl-4 text-right">
-                        {item.status === 'Active' ? (
-                          <Link
-                            to={`/staff/return?copyCode=${encodeURIComponent(
-                              item.copy.copyCode,
-                            )}`}
-                            className="h-8 px-3.5 rounded-md border border-brand-border bg-white inline-flex items-center justify-center text-[12px] font-semibold text-brand-teal hover:border-brand-teal transition-colors"
+                        </td>
+                        <td className="py-3.5 px-4 align-top">
+                          <p className="font-semibold text-[14px] text-brand-ink leading-snug">
+                            {item.book.title}
+                          </p>
+                          <p className="mt-0.5 text-[12px] text-brand-slate">
+                            {item.book.author}
+                          </p>
+                        </td>
+                        <td className="py-3.5 px-4 align-top">
+                          <p className="font-semibold text-brand-ink">
+                            {item.borrower.fullName}
+                          </p>
+                          <p className="text-[12px] font-mono text-brand-slate">
+                            {item.borrower.accountId}
+                          </p>
+                        </td>
+                        <td className="py-3.5 px-4 align-top text-brand-slate tabular-nums whitespace-nowrap">
+                          {formatShortBorrowingDate(item.borrowedAt)}
+                        </td>
+                        <td className="py-3.5 px-4 align-top tabular-nums whitespace-nowrap">
+                          <p
+                            className={`font-semibold ${
+                              isUrgent ? 'text-[#A1372B]' : 'text-brand-ink'
+                            }`}
                           >
-                            Return
-                          </Link>
-                        ) : (
-                          <span className="text-[12px] text-brand-slate">
-                            Closed
+                            {formatShortBorrowingDate(item.dueDate)}
+                          </p>
+                          {item.status === 'Returned' && item.returnedAt && (
+                            <p className="text-[12px] text-brand-teal">
+                              Returned{' '}
+                              {formatShortBorrowingDate(item.returnedAt)}
+                            </p>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 align-top whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${statusBadgeClass(
+                              item,
+                            )}`}
+                          >
+                            {item.status === 'Returned'
+                              ? 'Returned'
+                              : item.statusBadge}
                           </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                          {item.status === 'Returned' &&
+                            item.returnCondition && (
+                              <p
+                                className={`mt-1 text-[11.5px] font-medium ${
+                                  item.returnCondition === 'Good'
+                                    ? 'text-brand-slate'
+                                    : 'text-[#A1372B]'
+                                }`}
+                              >
+                                Condition: {item.returnCondition}
+                              </p>
+                            )}
+                        </td>
+                        <td className="py-3.5 pl-4 align-top text-right whitespace-nowrap">
+                          {item.status === 'Active' ? (
+                            <Link
+                              to={`/staff/return?copyCode=${encodeURIComponent(
+                                item.copy.copyCode,
+                              )}`}
+                              className="h-8 px-3.5 rounded-md border border-[#C6D7FF] bg-[#EDF2FF] hover:bg-[#DCE7FF] inline-flex items-center justify-center text-[12px] font-semibold text-[#315FF4] transition-colors"
+                            >
+                              Return
+                            </Link>
+                          ) : (
+                            <span className="text-[12px] text-brand-slate">
+                              Closed
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

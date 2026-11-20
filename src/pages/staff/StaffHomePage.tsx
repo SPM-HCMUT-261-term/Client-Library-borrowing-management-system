@@ -5,7 +5,7 @@ import { formatBorrowingToday } from '../../utils/borrowingDates';
 
 const cards = [
   {
-    title: 'New Borrow',
+    title: 'Lend book',
     description:
       'Find a student and check out several physical copies together.',
     icon: ArrowUpRight,
@@ -15,7 +15,7 @@ const cards = [
     titleColor: 'text-[#D96C00]',
   },
   {
-    title: 'Return Book',
+    title: 'Return book',
     description:
       'Find a borrowed copy, check its condition and confirm the return.',
     icon: ArrowDownLeft,
@@ -25,7 +25,7 @@ const cards = [
     titleColor: 'text-[#315FF4]',
   },
   {
-    title: 'Manage Books',
+    title: 'Inventory',
     description:
       'Browse inventory, add books and manage title details and physical copies.',
     icon: BookCopy,
@@ -35,7 +35,7 @@ const cards = [
     titleColor: 'text-[#17645F]',
   },
   {
-    title: 'History',
+    title: 'Records',
     description:
       'View active loans and returned history. Search by student, book or copy.',
     icon: Clock3,
@@ -49,11 +49,11 @@ const cards = [
 export const StaffHomePage: React.FC = () => (
   <div className="pt-8">
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[13px] text-brand-slate">
-      <span>Home</span>
+      <span>Staff panel</span>
       <span>{formatBorrowingToday()}</span>
     </div>
     <h1 className="mt-2 font-serif text-[32px] leading-[40px] font-semibold text-brand-ink">
-      Staff home
+      Staff panel
     </h1>
     <p className="mt-1.5 text-[14px] text-brand-slate">
       Choose a function to get started.

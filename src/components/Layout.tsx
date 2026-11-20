@@ -1,16 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   BookOpen,
   ArrowLeft,
   ArrowRight,
   Bell,
-  ChevronDown,
   Clock,
   ArrowUpRight,
-  LogOut,
-  User as UserIcon,
 } from 'lucide-react';
+import { UserMenuDropdown } from './UserMenuDropdown';
 
 export interface LayoutUser {
   _id: string;
@@ -38,24 +36,10 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const isCatalogActive =
     location.pathname.startsWith('/books') ||
     location.pathname.startsWith('/holds');
-  const isBorrowingActive = location.pathname.startsWith('/my-borrowing');
-  const isHomeActive = location.pathname === '/';
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-canvas text-brand-ink">
@@ -92,21 +76,6 @@ export const Layout: React.FC<LayoutProps> = ({
             ) : variant === 'student' && user ? (
               <nav className="hidden sm:flex items-center gap-8 h-full">
                 <NavLink
-                  to="/"
-                  end
-                  className={`relative h-full flex items-center text-[14px] transition-colors ${
-                    isHomeActive
-                      ? 'font-semibold text-brand-teal'
-                      : 'font-normal text-brand-slate hover:text-brand-ink'
-                  }`}
-                >
-                  Home
-                  {isHomeActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-teal" />
-                  )}
-                </NavLink>
-
-                <NavLink
                   to="/books"
                   className={`relative h-full flex items-center text-[14px] transition-colors ${
                     isCatalogActive
@@ -114,36 +83,14 @@ export const Layout: React.FC<LayoutProps> = ({
                       : 'font-normal text-brand-slate hover:text-brand-ink'
                   }`}
                 >
-                  Book catalog
+                  Browse books
                   {isCatalogActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-teal" />
                   )}
                 </NavLink>
-
-                <NavLink
-                  to="/my-borrowing"
-                  className={`relative flex h-full items-center whitespace-nowrap text-[14px] transition-colors ${
-                    isBorrowingActive
-                      ? 'font-semibold text-brand-teal'
-                      : 'font-normal text-brand-slate hover:text-brand-ink'
-                  }`}
-                >
-                  My borrowing
-                  {isBorrowingActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-teal" />
-                  )}
-                </NavLink>
-
               </nav>
             ) : (
               <nav className="hidden sm:flex items-center gap-8 h-full">
-                <Link
-                  to="/"
-                  className="relative h-full flex items-center text-[14px] font-semibold text-brand-teal"
-                >
-                  Home
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-teal" />
-                </Link>
                 <a
                   href="#how-borrowing-works"
                   className="h-full flex items-center text-[14px] font-normal text-brand-slate hover:text-brand-ink transition-colors"
@@ -172,60 +119,18 @@ export const Layout: React.FC<LayoutProps> = ({
                 </button>
 
                 {/* User Chip Dropdown */}
-                <div className="relative" ref={menuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setMenuOpen((prev) => !prev)}
-                    className="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-brand-canvas transition-colors text-left"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-brand-mint text-brand-teal font-semibold text-[12px] flex items-center justify-center shrink-0">
-                      {user.initials}
-                    </div>
-                    <div className="hidden sm:flex flex-col">
-                      <span className="text-[13px] font-semibold text-brand-ink leading-tight">
-                        {user.fullName}
-                      </span>
-                      <span className="text-[11px] text-brand-slate leading-tight mt-0.5">
-                        {user.yearGroup ? `${user.yearGroup} · ` : ''}
-                        {user.accountId}
-                      </span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-brand-slate" />
-                  </button>
-
-                  {menuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white border border-brand-border shadow-lg py-2 z-50">
-                      <div className="px-4 py-2 border-b border-brand-border sm:hidden">
-                        <p className="text-[13px] font-semibold text-brand-ink">
-                          {user.fullName}
-                        </p>
-                        <p className="text-[11px] text-brand-slate">
-                          {user.yearGroup ? `${user.yearGroup} · ` : ''}
-                          {user.accountId}
-                        </p>
-                      </div>
-                      <Link
-                        to="/my-borrowing"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-[13px] text-brand-ink hover:bg-brand-canvas"
-                      >
-                        <UserIcon className="w-4 h-4 text-brand-teal" />
-                        <span>My borrowing ({user.activeLoansCount ?? 2} / {user.maxLoansLimit ?? 5})</span>
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMenuOpen(false);
-                          onLogout?.();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-red-700 hover:bg-red-50 text-left"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Sign out</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <UserMenuDropdown
+                  user={user}
+                  profileLink={{
+                    to: '/profile',
+                    label: 'My profile',
+                  }}
+                  secondaryLink={{
+                    to: '/my-borrowing',
+                    label: `My borrowing (${user.activeLoansCount ?? 0} / ${user.maxLoansLimit ?? 5})`,
+                  }}
+                  onLogout={() => onLogout?.()}
+                />
               </div>
             ) : (
               <Link
